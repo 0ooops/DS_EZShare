@@ -6,7 +6,6 @@ import org.json.simple.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 
 
 public class Server {
@@ -40,7 +39,7 @@ public class Server {
                 || primaryKeys.containsKey(pKey)) {
             response.put("response", "error");
             response.put("errorMessage", "invalid resource");
-        } else if(keys[uri].startsWith("file:\\/\\/\\/\\/")) {
+        } else if(keys[uri].startsWith("file:\\/\\/\\/")) {
             response.put("response", "error");
             response.put("errorMessage", "cannot publish resource");
         } else {
@@ -76,7 +75,7 @@ public class Server {
                 || primaryKeys.containsKey(pKey)) {
             response.put("response", "error");
             response.put("errorMessage", "invalid resource");
-        } else if(!keys[uri].startsWith("file:\/\/\/\/")) {
+        } else if(!keys[uri].startsWith("file:\\/\\/\\/")) {
             response.put("response", "error");
             response.put("errorMessage", "cannot share resource");
         } else {
