@@ -25,14 +25,21 @@ public class Server {
         abc.put("tags", arr);
         abc.put("description", "");
         abc.put("uri", "http://abc.com");
+        //abc.put("uri", "file:\\/\\/\\/~/Download/abc.txt");
         abc.put("channel", "");
         abc.put("owner", "");
         abc.put("ezserver", "");
 
-        publish(abc);
-        //abc.remove("owner");
-        //abc.put("owner", "chen");
-        publish(abc);
+        JSONObject test = new JSONObject();
+        //test.put("command", "SHARE");
+        //test.put("secret", "a");
+
+        test.put("command", "PUBLISH");
+        test.put("resource", abc);
+        System.out.println(test);
+        //share(test);
+
+        publish(test);
     }
 
     /**
@@ -44,29 +51,37 @@ public class Server {
     public static void publish(JSONObject obj) {
         //json object contains command respond
         JSONObject response = new JSONObject();
-        String uri = (String) obj.get("uri");
-        String owner = (String) obj.get("owner");
 
-        //check if resource is valid
-        if(uri.equals("")
-                || uri == null
-                || owner.equals("*")) {
-            response.put("response", "error");
-            response.put("errorMessage", "invalid resource");
-        } else if(uri.startsWith("file:\\/\\/\\/")) {
-            response.put("response", "error");
-            response.put("errorMessage", "cannot publish resource");
-        } else {
-            //create a resource and add to the resource list
-            Resource res = getResource(obj);
-            if(!resources.contains(res)) {
+        //check if json has a resource
+        if (obj.containsKey("resource")) {
+            //get the resources json
+            JSONObject resJSON = (JSONObject) obj.get("resource");
+            String uri = (String) resJSON.get("uri");
+            String owner = (String) resJSON.get("owner");
 
-                resources.put(res);
-                response.put("response", "success");
-            } else {
+            //check if resource is valid
+            if (uri.equals("")
+                    || uri == null
+                    || owner.equals("*")) {
                 response.put("response", "error");
                 response.put("errorMessage", "invalid resource");
+            } else if (uri.startsWith("file:\\/\\/\\/")) {
+                response.put("response", "error");
+                response.put("errorMessage", "cannot publish resource");
+            } else {
+                //create a resource and add to the resource list
+                Resource res = getResource(resJSON);
+                if (!resources.contains(res)) {
+                    resources.put(res);
+                    response.put("response", "success");
+                } else {
+                    response.put("response", "error");
+                    response.put("errorMessage", "invalid resource");
+                }
             }
+        } else {
+            response.put("response", "error");
+            response.put("errorMessage", "missing resource");
         }
 
         //respond to command
@@ -83,29 +98,51 @@ public class Server {
         //json object contains command respond
         JSONObject response = new JSONObject();
 
-        String uri = (String) obj.get("uri");
-        String owner = (String) obj.get("owner");
+        //check if json contains a secret
+        if (obj.containsKey("secret")) {
+            //check if the secret is valid
+            if (!((String)obj.get("secret")).equals("")) {
+                //check if there is a resource
+                if (obj.containsKey("resource")) {
+                    //get the resources json
+                    JSONObject resJSON = (JSONObject) obj.get("resource");
+                    System.out.println(resJSON);
+                    String uri = (String) resJSON.get("uri");
+                    String owner = (String) resJSON.get("owner");
 
-        //check if resource is valid
-        if(uri.equals("")
-                || uri == null
-                || owner.equals("*")) {
-            response.put("response", "error");
-            response.put("errorMessage", "invalid resource");
-        } else if(!uri.startsWith("file:\\/\\/\\/")) {
-            response.put("response", "error");
-            response.put("errorMessage", "cannot share resource");
-        } else {
-            //create a resource and add to the resource list
-            Resource res = getResource(obj);
-            if(!resources.contains(res)) {
-                resources.put(res);
-                response.put("response", "success");
+                    //check if resource is valid
+                    if (uri.equals("")
+                            || uri == null
+                            || owner.equals("*")) {
+                        response.put("response", "error");
+                        response.put("errorMessage", "invalid resource");
+                    } else if (!uri.startsWith("file:\\/\\/\\/")) {
+                        response.put("response", "error");
+                        response.put("errorMessage", "cannot share resource");
+                    } else {
+                        //create a resource and add to the resource list
+                        Resource res = getResource(resJSON);
+                        if (!resources.contains(res)) {
+                            resources.put(res);
+                            response.put("response", "success");
+                        } else {
+                            response.put("response", "error");
+                            response.put("errorMessage", "invalid resource");
+                        }
+                    }
+                } else {
+                    response.put("response", "error");
+                    response.put("errorMessage", "missing resource and\\/or secret");
+                }
             } else {
                 response.put("response", "error");
-                response.put("errorMessage", "invalid resource");
+                response.put("errorMessage", "incorrect secret");
             }
+        } else {
+            response.put("response", "error");
+            response.put("errorMessage", "missing resource and\\/or secret");
         }
+
 
         //respond to command
         System.out.println(response);
