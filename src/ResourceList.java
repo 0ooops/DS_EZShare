@@ -1,5 +1,3 @@
-import org.json.simple.JSONObject;
-
 import java.util.HashMap;
 
 /**
@@ -8,7 +6,7 @@ import java.util.HashMap;
 public class ResourceList {
     private HashMap<String, HashMap<String, HashMap<String, Resource>>> resources;
 
-    public void ResourceList() {
+    public ResourceList() {
         resources = new HashMap<String, HashMap<String, HashMap<String, Resource>>>();
     }
 
@@ -23,7 +21,6 @@ public class ResourceList {
         r.put(owner, res);
         uris.put(uri, r);
         */
-
         resources.put(channel, new HashMap<String, HashMap<String, Resource>>());
         resources.get(channel).put(uri, new HashMap<String, Resource>());
         resources.get(channel).get(uri).put(owner, res);

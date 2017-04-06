@@ -4,8 +4,7 @@
 //import org.json.simple.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import org.json.simple.*;
 
 
 public class Server {
@@ -32,7 +31,6 @@ public class Server {
 
 
         publish(abc);
-        System.out.println(resources.toString());
     }
 
     /**
@@ -64,7 +62,7 @@ public class Server {
             if(true){
                 resources.put(res);
                 response.put("response", "success");
-                System.out.println(res.toJSON());
+                System.out.println(resources.get(owner, channel, uri).toJSON());
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "invalid resource");
