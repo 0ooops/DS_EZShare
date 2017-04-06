@@ -56,28 +56,34 @@ public class Server {
         if (obj.containsKey("resource")) {
             //get the resources json
             JSONObject resJSON = (JSONObject) obj.get("resource");
-            String uri = (String) resJSON.get("uri");
-            String owner = (String) resJSON.get("owner");
+            if (resJSON.containsKey("uri")) {
+                String uri = (String) resJSON.get("uri");
+                String owner = "";
+                if (resJSON.containsKey("owner")) {
+                    owner = (String) resJSON.get("owner");
+                }
 
-            //check if resource is valid
-            if (uri.equals("")
-                    || uri == null
-                    || owner.equals("*")) {
-                response.put("response", "error");
-                response.put("errorMessage", "invalid resource");
-            } else if (uri.startsWith("file:\\/\\/\\/")) {
-                response.put("response", "error");
-                response.put("errorMessage", "cannot publish resource");
-            } else {
-                //create a resource and add to the resource list
-                Resource res = getResource(resJSON);
-                if (!resources.contains(res)) {
-                    resources.put(res);
-                    response.put("response", "success");
-                } else {
+                //check if resource is valid
+                if (uri.equals("") || owner.equals("*")) {
                     response.put("response", "error");
                     response.put("errorMessage", "invalid resource");
+                } else if (uri.startsWith("file:\\/\\/\\/")) {
+                    response.put("response", "error");
+                    response.put("errorMessage", "cannot publish resource");
+                } else {
+                    //create a resource and add to the resource list
+                    Resource res = getResource(resJSON);
+                    if (!resources.contains(res)) {
+                        resources.put(res);
+                        response.put("response", "success");
+                    } else {
+                        response.put("response", "error");
+                        response.put("errorMessage", "invalid resource");
+                    }
                 }
+            } else {
+                response.put("response", "error");
+                response.put("errorMessage", "invalid resource");
             }
         } else {
             response.put("response", "error");
@@ -107,28 +113,34 @@ public class Server {
                     //get the resources json
                     JSONObject resJSON = (JSONObject) obj.get("resource");
                     System.out.println(resJSON);
-                    String uri = (String) resJSON.get("uri");
-                    String owner = (String) resJSON.get("owner");
+                    if (resJSON.containsKey("uri")) {
+                        String uri = (String) resJSON.get("uri");
+                        String owner = "";
+                        if (resJSON.containsKey("owner")) {
+                            owner = (String) resJSON.get("owner");
+                        }
 
-                    //check if resource is valid
-                    if (uri.equals("")
-                            || uri == null
-                            || owner.equals("*")) {
-                        response.put("response", "error");
-                        response.put("errorMessage", "invalid resource");
-                    } else if (!uri.startsWith("file:\\/\\/\\/")) {
-                        response.put("response", "error");
-                        response.put("errorMessage", "cannot share resource");
-                    } else {
-                        //create a resource and add to the resource list
-                        Resource res = getResource(resJSON);
-                        if (!resources.contains(res)) {
-                            resources.put(res);
-                            response.put("response", "success");
-                        } else {
+                        //check if resource is valid
+                        if (uri.equals("") || owner.equals("*")) {
                             response.put("response", "error");
                             response.put("errorMessage", "invalid resource");
+                        } else if (!uri.startsWith("file:\\/\\/\\/")) {
+                            response.put("response", "error");
+                            response.put("errorMessage", "cannot share resource");
+                        } else {
+                            //create a resource and add to the resource list
+                            Resource res = getResource(resJSON);
+                            if (!resources.contains(res)) {
+                                resources.put(res);
+                                response.put("response", "success");
+                            } else {
+                                response.put("response", "error");
+                                response.put("errorMessage", "invalid resource");
+                            }
                         }
+                    } else {
+                        response.put("response", "error");
+                        response.put("errorMessage", "invalid resource");
                     }
                 } else {
                     response.put("response", "error");
@@ -158,12 +170,36 @@ public class Server {
     private static Resource getResource(JSONObject obj) {
         //get resource parameters
         String uri = (String)obj.get("uri");
-        String channel = (String)obj.get("channel");
-        String owner = (String)obj.get("owner");
-        String name = (String) obj.get("name");
-        String des = (String) obj.get("description");
-        ArrayList<String> tags = (ArrayList<String>)obj.get("tags");
-        String server = (String) obj.get("ezserver");
+
+        String channel = "";
+        if (obj.containsKey("channel")) {
+            channel = (String) obj.get("owner");
+        }
+
+        String owner = "";
+        if (obj.containsKey("owner")) {
+            owner = (String) obj.get("owner");
+        }
+
+        String name = "";
+        if (obj.containsKey("name")) {
+            name = (String) obj.get("name");
+        }
+
+        String des = "";
+        if (obj.containsKey("description")) {
+            des = (String) obj.get("description");
+        }
+
+        ArrayList<String> tags = new ArrayList<String>();
+        if (obj.containsKey("tags")) {
+            tags = (ArrayList<String>)obj.get("tags");
+        }
+
+        String server = "";
+        if (obj.containsKey("ezserver")) {
+            server = (String) obj.get("ezserver");
+        }
 
         //new resource
         Resource res = new Resource(uri, channel, owner, name, des, tags, server);
