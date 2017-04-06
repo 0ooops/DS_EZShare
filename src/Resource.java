@@ -12,17 +12,24 @@ import java.util.ArrayList;
 
 
 public class Resource {
-    private String name = "";
-    private String description = "";
-    private ArrayList<String> tags = new ArrayList<>();
+    private String name;
+    private String description;
+    private ArrayList<String> tags;
     private String uri;
-    private String channel = "";
-    private String owner = "";
-    private String ezServer = "";
+    private String channel;
+    private String owner;
+    private String ezServer;
 
     //Constructor: A URI is a compulsory element for resource.
-    public Resource(String uri) {
+    public Resource(String uri, String channel, String owner, String name,
+                    String description, ArrayList<String> tags, String ezserver) {
         this.uri = uri;
+        this.name = name;
+        this.description = description;
+        this.tags = tags;
+        this.channel = channel;
+        this.owner = owner;
+        this.ezServer = ezserver;
     }
 
     //Getters and Setters

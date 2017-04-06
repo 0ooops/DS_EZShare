@@ -29,7 +29,9 @@ public class Server {
         abc.put("owner", "");
         abc.put("ezserver", "");
 
-
+        publish(abc);
+        //abc.remove("owner");
+        //abc.put("owner", "chen");
         publish(abc);
     }
 
@@ -44,7 +46,6 @@ public class Server {
         JSONObject response = new JSONObject();
         String uri = (String) obj.get("uri");
         String owner = (String) obj.get("owner");
-        String channel = (String) obj.get("channel");
 
         //check if resource is valid
         if(uri.equals("")
@@ -58,11 +59,10 @@ public class Server {
         } else {
             //create a resource and add to the resource list
             Resource res = getResource(obj);
-            //if(!resources.contains(res)) {
-            if(true){
+            if(!resources.contains(res)) {
+
                 resources.put(res);
                 response.put("response", "success");
-                System.out.println(resources.get(owner, channel, uri).toJSON());
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "invalid resource");
@@ -101,7 +101,6 @@ public class Server {
             if(!resources.contains(res)) {
                 resources.put(res);
                 response.put("response", "success");
-                System.out.println(res.toJSON());
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "invalid resource");
@@ -120,32 +119,18 @@ public class Server {
      * json object contain the resource
      */
     private static Resource getResource(JSONObject obj) {
+        //get resource parameters
+        String uri = (String)obj.get("uri");
+        String channel = (String)obj.get("channel");
+        String owner = (String)obj.get("owner");
+        String name = (String) obj.get("name");
+        String des = (String) obj.get("description");
+        ArrayList<String> tags = (ArrayList<String>)obj.get("tags");
+        String server = (String) obj.get("ezserver");
 
+        //new resource
+        Resource res = new Resource(uri, channel, owner, name, des, tags, server);
 
-        //new resource with uri
-        Resource res = new Resource((String)obj.get("uri"));
-
-        //array to store tags
-        //ArrayList<String> tags = new ArrayList<String>();
-
-        //set variables in Resource
-        res.setName((String) obj.get("name"));
-        res.setChannel((String)obj.get("channel"));
-        res.setDescription((String) obj.get("description"));
-        res.setOwner((String)obj.get("owner"));
-        res.setOwner((String) obj.get("ezserver"));
-
-        //iterate through the tags array and set the tags in Resource
-        ArrayList<String> arr = (ArrayList<String>) obj.get("tags");
-        /*Iterator it = arr.iterator();
-
-        while (it.hasNext()) {
-            tags.add((String) it.next());
-        }
-        if (!tags.isEmpty()) {
-            res.setTags(tags);
-        }*/
-        res.setTags(arr);
         //add resource to resource list
         return res;
     }
