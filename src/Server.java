@@ -3,18 +3,22 @@
  */
 //import org.json.simple.*;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import org.json.simple.*;
 
 
 public class Server {
 
-    //private static ArrayList<Resource> res = new ArrayList<Resource>();
-    private static ResourceList resources = new ResourceList();
+    private static ArrayList<Resource> resources = new ArrayList<Resource>();
+    private static KeyList keys = new KeyList();
 
     /**
-     * testing main
+     * testing
      */
+
     public static void main(String[] args) {
 
         JSONObject abc = new JSONObject();
@@ -37,9 +41,64 @@ public class Server {
         test.put("command", "PUBLISH");
         test.put("resource", abc);
         System.out.println(test);
+        publish(test);
         //share(test);
 
-        publish(test);
+        abc.remove("owner");
+        //abc.put("owner", "peter");
+        abc.put("owner", "");
+
+        JSONObject test2 = new JSONObject();
+        test2.put("command", "PUBLISH");
+        test2.put("resource", abc);
+        System.out.println(test2);
+        publish(test2);
+
+        /*
+        String domainName = "sunrise.cis.unimelb.edu.au";
+        int serverPort = 3780;
+        JSONObject abc = new JSONObject();
+        JSONObject test = new JSONObject();
+        String sendData;
+        String receiveData;
+
+        try {
+            Socket connection = new Socket(domainName, serverPort);
+            DataInputStream in = new DataInputStream(connection.getInputStream());
+            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+            System.out.println(connection.getRemoteSocketAddress());
+            abc.put("name", "ezshare");
+            ArrayList<String> arr = new ArrayList<String>();
+            arr.add("cmd");
+            arr.add("win");
+            abc.put("tags", arr);
+            abc.put("description", "");
+            abc.put("uri", "http://abc.com");
+            //abc.put("uri", "file:\\/\\/\\/~/Download/abc.txt");
+            abc.put("channel", "");
+            abc.put("owner", "");
+            abc.put("ezserver", "");
+            test.put("command", "SHARE");
+            //test.put("secret", "2os41f58vkd9e1q4ua6ov5emlv");
+            //test.put("resource", abc);
+            sendData = test.toString();
+            System.out.println(sendData);
+
+            out.writeUTF(sendData);
+            out.flush();
+
+            do {
+                receiveData = in.readUTF();
+                System.out.println(receiveData);
+            }while (in.available() > 0);
+            in.close();
+            out.close();
+            connection.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        */
     }
 
     /**
@@ -73,8 +132,8 @@ public class Server {
                 } else {
                     //create a resource and add to the resource list
                     Resource res = getResource(resJSON);
-                    if (!resources.contains(res)) {
-                        resources.put(res);
+                    if (keys.put(res)) {
+                        resources.add(res);
                         response.put("response", "success");
                     } else {
                         response.put("response", "error");
@@ -130,8 +189,8 @@ public class Server {
                         } else {
                             //create a resource and add to the resource list
                             Resource res = getResource(resJSON);
-                            if (!resources.contains(res)) {
-                                resources.put(res);
+                            if (keys.put(res)) {
+                                resources.add(res);
                                 response.put("response", "success");
                             } else {
                                 response.put("response", "error");
@@ -173,7 +232,7 @@ public class Server {
 
         String channel = "";
         if (obj.containsKey("channel")) {
-            channel = (String) obj.get("owner");
+            channel = (String) obj.get("channel");
         }
 
         String owner = "";
