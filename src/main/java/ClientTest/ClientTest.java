@@ -1,9 +1,9 @@
-/**
+package ClientTest; /**
  * This is used for testing prof's server.
  */
 
 import net.sf.json.JSONObject;
-
+//import org.json.simple.JSONObject;
 import java.io.*;
 import java.net.*;
 

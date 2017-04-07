@@ -1,4 +1,4 @@
-/**
+package Server; /**
  * The class Resource is an entity used for storing resources records.
  * The constructor of the class requires the value of uri, because uri
  * is a compulsory element of a resource.
@@ -7,7 +7,8 @@
  * @author: Jiayu Wang
  * @date: April 1, 2017
  */
-import net.sf.json.JSONObject;
+//import net.sf.json.JSONObject;
+import org.json.simple.JSONObject;
 import java.util.ArrayList;
 
 

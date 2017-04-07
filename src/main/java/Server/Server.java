@@ -1,4 +1,4 @@
-/**
+package Server; /**
  * This class is used as server side in client-server model. The server class
  * basically takes responsibility for accepting connection with client, and
  * creates new thread for each client. You need to specify the port number in
@@ -7,14 +7,16 @@
  * @date: April 5, 2017
  */
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+//import net.sf.json.JSONArray;
+//import net.sf.json.JSONObject;
 import javax.net.ServerSocketFactory;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 
 
 public class Server {
@@ -127,10 +129,10 @@ public class Server {
                     //System.out.println(index);
                     if (index >= -1) {
                         if (index >= 0) {
-                            resources.remove(index);
-                            resources.add(index, res);
+                            resourceList.remove(index);
+                            resourceList.add(index, res);
                         }
-                        resources.add(res);
+                        resourceList.add(res);
                         response.put("response", "success");
                     } else {
                         response.put("response", "error");
@@ -189,10 +191,10 @@ public class Server {
                             int index = keys.put(res);
                             if (index >= -1) {
                                 if (index >= 0) {
-                                    resources.remove(index);
-                                    resources.add(index, res);
+                                    resourceList.remove(index);
+                                    resourceList.add(index, res);
                                 }
-                                resources.add(res);
+                                resourceList.add(res);
                                 response.put("response", "success");
                             } else {
                                 response.put("response", "error");
