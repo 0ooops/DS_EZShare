@@ -1,4 +1,6 @@
-package Server; /**
+package Server;
+
+/**
  * This class is used as server side in client-server model. The server class
  * basically takes responsibility for accepting connection with client, and
  * creates new thread for each client. You need to specify the port number in
@@ -7,21 +9,21 @@ package Server; /**
  * @date: April 5, 2017
  */
 
-//import net.sf.json.JSONArray;
-//import net.sf.json.JSONObject;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import javax.net.ServerSocketFactory;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
+//import org.json.simple.JSONObject;
+//import org.json.simple.JSONArray;
 
 
 public class Server {
-    private static ArrayList<Resource> resourceList = new ArrayList<>();
-    private static ArrayList<HashMap> serverList = new ArrayList<>();
+    private static HashMap<Integer, Resource> resourceList = new HashMap<Integer, Resource>();
+    private static ArrayList<HashMap> serverList = new ArrayList<HashMap>();
     private static KeyList keys = new KeyList();
 
     public static void main(String[] args) {
@@ -58,13 +60,13 @@ public class Server {
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
-                        publish(cmd);
+                        PublishNShare.publish(cmd, resourceList, keys);
                         break;
                     case "REMOVE":
                         remove(cmd);
                         break;
                     case "SHARE":
-                        share(cmd);
+                        PublishNShare.share(cmd, resourceList, keys);
                         break;
                     case "FETCH":
                         fetch(cmd);
@@ -94,182 +96,7 @@ public class Server {
         }
     }
 
-    /**
-     * publish resource in the server
-     *
-     * @param obj
-     * json object contain the resource
-     */
-    public static void publish(JSONObject obj) {
-        //json object contains command respond
-        JSONObject response = new JSONObject();
 
-        //check if json has a resource
-        if (obj.containsKey("resource")) {
-            //get the resources json
-            JSONObject resJSON = (JSONObject) obj.get("resource");
-            if (resJSON.containsKey("uri")) {
-                String uri = (String) resJSON.get("uri");
-                String owner = "";
-                if (resJSON.containsKey("owner")) {
-                    owner = (String) resJSON.get("owner");
-                }
-
-                //check if resource is valid
-                if (uri.equals("") || owner.equals("*")) {
-                    response.put("response", "error");
-                    response.put("errorMessage", "invalid resource");
-                } else if (uri.startsWith("file:\\/\\/\\/")) {
-                    response.put("response", "error");
-                    response.put("errorMessage", "cannot publish resource");
-                } else {
-                    //create a resource and add to the resource list
-                    Resource res = getResource(resJSON);
-                    int index = keys.put(res);
-                    //System.out.println(index);
-                    if (index >= -1) {
-                        if (index >= 0) {
-                            resourceList.remove(index);
-                            resourceList.add(index, res);
-                        }
-                        resourceList.add(res);
-                        response.put("response", "success");
-                    } else {
-                        response.put("response", "error");
-                        response.put("errorMessage", "invalid resource");
-                    }
-                }
-            } else {
-                response.put("response", "error");
-                response.put("errorMessage", "invalid resource");
-            }
-        } else {
-            response.put("response", "error");
-            response.put("errorMessage", "missing resource");
-        }
-
-        //respond to command
-        System.out.println(response);
-    }
-
-    /**
-     * publish resource with a file type uri in the server
-     *
-     * @param obj
-     * json object contain the resource
-     */
-    public static void share(JSONObject obj) {
-        //json object contains command respond
-        JSONObject response = new JSONObject();
-
-        //check if json contains a secret
-        if (obj.containsKey("secret")) {
-            //check if the secret is valid
-            if (!((String)obj.get("secret")).equals("")) {
-                //check if there is a resource
-                if (obj.containsKey("resource")) {
-                    //get the resources json
-                    JSONObject resJSON = (JSONObject) obj.get("resource");
-                    System.out.println(resJSON);
-                    if (resJSON.containsKey("uri")) {
-                        String uri = (String) resJSON.get("uri");
-                        String owner = "";
-                        if (resJSON.containsKey("owner")) {
-                            owner = (String) resJSON.get("owner");
-                        }
-
-                        //check if resource is valid
-                        if (uri.equals("") || owner.equals("*")) {
-                            response.put("response", "error");
-                            response.put("errorMessage", "invalid resource");
-                        } else if (!uri.startsWith("file:\\/\\/\\/")) {
-                            response.put("response", "error");
-                            response.put("errorMessage", "cannot share resource");
-                        } else {
-                            //create a resource and add to the resource list
-                            Resource res = getResource(resJSON);
-                            int index = keys.put(res);
-                            if (index >= -1) {
-                                if (index >= 0) {
-                                    resourceList.remove(index);
-                                    resourceList.add(index, res);
-                                }
-                                resourceList.add(res);
-                                response.put("response", "success");
-                            } else {
-                                response.put("response", "error");
-                                response.put("errorMessage", "invalid resource");
-                            }
-                        }
-                    } else {
-                        response.put("response", "error");
-                        response.put("errorMessage", "invalid resource");
-                    }
-                } else {
-                    response.put("response", "error");
-                    response.put("errorMessage", "missing resource and\\/or secret");
-                }
-            } else {
-                response.put("response", "error");
-                response.put("errorMessage", "incorrect secret");
-            }
-        } else {
-            response.put("response", "error");
-            response.put("errorMessage", "missing resource and\\/or secret");
-        }
-
-
-        //respond to command
-        System.out.println(response);
-    }
-
-
-    /**
-     * parse json object into a resource object
-     *
-     * @param obj
-     * json object contain the resource
-     */
-    private static Resource getResource(JSONObject obj) {
-        //get resource parameters
-        String uri = (String)obj.get("uri");
-
-        String channel = "";
-        if (obj.containsKey("channel")) {
-            channel = (String) obj.get("channel");
-        }
-
-        String owner = "";
-        if (obj.containsKey("owner")) {
-            owner = (String) obj.get("owner");
-        }
-
-        String name = "";
-        if (obj.containsKey("name")) {
-            name = (String) obj.get("name");
-        }
-
-        String des = "";
-        if (obj.containsKey("description")) {
-            des = (String) obj.get("description");
-        }
-
-        ArrayList<String> tags = new ArrayList<String>();
-        if (obj.containsKey("tags")) {
-            tags = (ArrayList<String>)obj.get("tags");
-        }
-
-        String server = "";
-        if (obj.containsKey("ezserver")) {
-            server = (String) obj.get("ezserver");
-        }
-
-        //new resource
-        Resource res = new Resource(uri, channel, owner, name, des, tags, server);
-
-        //add resource to resource list
-        return res;
-    }
 
     //This function is mainly for parsing the "relay" argument and overall control.
     public static JSONArray query (JSONObject command) {
@@ -348,7 +175,7 @@ public class Server {
     // This function is for one server to query the resource on another server.
     public static JSONArray otherQuery(HashMap serverPort, JSONObject command) {
         String server = serverPort.get("hostname").toString();
-        int port = (int)serverPort.get("port");
+        int port = (int) serverPort.get("port");
         String sendData = command.toString(); //我这里相当于假定Client端负责解析，Server端收到的是toString过的JSON
         JSONArray queryList;
 

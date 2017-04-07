@@ -46,12 +46,30 @@ public class KeyList {
         return -1;
     }
 
-
     /**
-     * @return the size of the key list
+     * remove a key pair in the list using keys
+     *
+     * @param channel
+     * @param uri
+     * @param owner
+     * @return if remove is successful;
      */
-    public int size() {
-        return keys.size();
+    public boolean remove(String channel, String uri, String owner) {
+        if(keys.containsKey(channel)) {
+            if (keys.get(channel).containsKey(uri)) {
+                if (keys.get(channel).get(uri).containsKey(owner)) {
+                    keys.get(channel).get(uri).remove(owner);
+                    if (keys.get(channel).get(uri).isEmpty()) {
+                        keys.get(channel).remove(uri);
+                        if (keys.get(channel).isEmpty()) {
+                            keys.remove(channel);
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
