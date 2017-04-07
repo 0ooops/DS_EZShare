@@ -1,47 +1,53 @@
 import java.util.HashMap;
 
 /**
- * A class that represent the list of resources
+ * A class that represent the list of primary keys
  */
 public class KeyList {
-    private HashMap<String, HashMap<String, String>> keys;
+    private HashMap<String, HashMap<String, HashMap<String, Integer>>> keys;
+    private Integer index;
 
     public KeyList() {
-        keys = new HashMap<String, HashMap<String, String>>();
+        keys = new HashMap<String, HashMap<String, HashMap<String, Integer>>>();
+        index = 0;
     }
 
     /**
-     * put a resource into the list
+     * put a key set into the list
      *
      * @param res
      * resource
      */
 
-    public boolean put(Resource res) {
+    public int put(Resource res) {
         String channel = res.getChannel();
         String owner = res.getOwner();
         String uri = res.getUri();
-        boolean success = true;
-        boolean fail = false;
+
         if (keys.containsKey(channel)) {
             if (keys.get(channel).containsKey(uri)) {
-                if (!keys.get(channel).get(uri).equals(owner)) {
-                    return fail;
+                if (!keys.get(channel).get(uri).containsKey(owner)) {
+                    return -2;
+                } else {
+                    return keys.get(channel).get(uri).get(owner);
                 }
             } else {
-                keys.get(channel).put(uri, owner);
+                keys.get(channel).put(uri, new HashMap<String, Integer>());
+                keys.get(channel).get(uri).put(owner, index);
             }
         } else {
-            keys.put(channel, new HashMap<String, String>());
-            keys.get(channel).put(uri, owner);
+            keys.put(channel, new HashMap<String, HashMap<String, Integer>>());
+            keys.get(channel).put(uri, new HashMap<String, Integer>());
+            keys.get(channel).get(uri).put(owner, index);
         }
-
-        return success;
+        //System.out.println(index);
+        index += 1;
+        return -1;
     }
 
 
     /**
-     * @return the size of the resource list
+     * @return the size of the key list
      */
     public int size() {
         return keys.size();
