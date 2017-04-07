@@ -17,8 +17,6 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-//import org.json.simple.JSONObject;
-//import org.json.simple.JSONArray;
 
 
 public class Server {
@@ -60,13 +58,13 @@ public class Server {
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
-                        PublishNShare.publish(cmd, resourceList, keys);
+                        sendMsg.add(PublishNShare.publish(cmd, resourceList, keys));
                         break;
                     case "REMOVE":
                         remove(cmd);
                         break;
                     case "SHARE":
-                        PublishNShare.share(cmd, resourceList, keys);
+                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys));
                         break;
                     case "FETCH":
                         fetch(cmd);

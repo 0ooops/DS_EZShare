@@ -1,10 +1,6 @@
 package Server;
 
-//import org.json.simple.JSONObject;
-//import org.json.simple.JSONArray;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,9 +17,9 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONArray publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
+    public static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
         //json object contains command respond
-        JSONArray r = new JSONArray();
+        //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
 
         //check if json has a resource
@@ -79,8 +75,7 @@ public class PublishNShare {
 
         //respond to command
         System.out.println(response);
-        r.add(response);
-        return r;
+        return response;
     }
 
     /**
@@ -89,9 +84,9 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONArray share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
+    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
         //json object contains command respond
-        JSONArray r = new JSONArray();
+        //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
 
         //check if json contains a secret
@@ -161,8 +156,8 @@ public class PublishNShare {
 
         //respond to command
         System.out.println(response);
-        r.add(response);
-        return r;
+        //r.add(response);
+        return response;
     }
 
 
