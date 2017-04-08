@@ -1,4 +1,5 @@
-package Client; /**
+package Client;
+/**
  * Created by jiangyiming on 4/8/17.
  */
 
@@ -14,16 +15,16 @@ import java.net.Socket;
 
 public class MyClient {
 
-    /**
-     * @param args the command line arguments
-     */
-
     //TODO:-debug
     private static Log log = LogFactory.getLog(MyClient.class);
 //    private static final Logger LOGG = Logger.getLogger(MyClient.class);
 
+    /**
+     * default server host and port
+     */
     private static int port = 3780;
     private static String host = "sunrise.cis.unimelb.edu.au";
+
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -32,7 +33,9 @@ public class MyClient {
     private static String uri = "";
 
     private static String ezserver = null;
-
+    /**
+     * all valid commands.
+     */
     private static final String PUBLISH = "-publish";
     private static final String REMOVE = "-remove";
     private static final String SHARE = "-share";
@@ -41,7 +44,9 @@ public class MyClient {
     private static final String EXCHANGE = "-exchange";
 
     public static void main(String[] args) {
-
+        /**
+         * all client side commands.
+         */
         Options options = new Options();
         options.addOption("channel", true, "channel");
         options.addOption("debug", false, "print debug information");
@@ -73,13 +78,12 @@ public class MyClient {
             System.exit(1);
             return;
         }
-//        Option[] cmdoptions = cmd.getOptions();
-//        for (Option cmdoption : cmdoptions) {
-//            cmdoption.getOpt();
-//            System.out.println(cmdoption.getOpt());
-//            System.out.println();
-//        }
-
+/**
+ * 1.judge whether the client gives any command.
+ * 2.verify the command.
+ * 3.produce corresponding JSON Objects for sending to the server.
+ * 4.send message.
+ */
         if (args == null || args.length == 0) {
             formatter.printHelp("commands", options);
             System.out.println("Please choose commands from above");
@@ -93,8 +97,7 @@ public class MyClient {
                         System.exit(1);
                         return;
                     } else {
-                        uri = cmd.hasOption("uri") ? uri = cmd.getOptionValue("uri") : "";
-                        JSONObject sendPub = publishCommand(cmd, uri);
+                        JSONObject sendPub = publishCommand(cmd);
                         sendMessage(sendPub, cmd);
 
                     }
@@ -105,8 +108,7 @@ public class MyClient {
                         System.exit(1);
                         return;
                     } else {
-                        uri = cmd.hasOption("uri") ? uri = cmd.getOptionValue("uri") : "";
-                        JSONObject sendRem = removeCommand(cmd, uri);
+                        JSONObject sendRem = removeCommand(cmd);
                         sendMessage(sendRem, cmd);
                     }
                     break;
@@ -116,8 +118,7 @@ public class MyClient {
                         System.exit(1);
                         return;
                     } else {
-                        uri = cmd.hasOption("uri") ? uri = cmd.getOptionValue("uri") : "";
-                        JSONObject sendShare = shareCommand(cmd, uri);
+                        JSONObject sendShare = shareCommand(cmd);
                         sendMessage(sendShare, cmd);
                     }
                     break;
@@ -153,8 +154,8 @@ public class MyClient {
         JSONArray serverlist = new JSONArray();
         String servers = cmd.getOptionValue("servers");
         String[] sServers = servers.split(",");
-        for (int i = 0; i < sServers.length; i++) {
-            String[] tempServer = sServers[i].split(":");
+        for (String sServer : sServers) {
+            String[] tempServer = sServer.split(":");
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
             serv.put("port", tempServer[0]);
@@ -166,10 +167,10 @@ public class MyClient {
     }
 
     private static JSONObject fetchCommand(CommandLine cmd) {
-        JSONObject fromquery = queryCommand(cmd);
-        fromquery.put("command", "FETCH");
-        fromquery.remove("relay");
-        return fromquery;
+        JSONObject fetch = queryCommand(cmd);
+        fetch.put("command", "FETCH");
+        fetch.remove("relay");
+        return fetch;
     }
 
     private static JSONObject queryCommand(CommandLine cmd) {
@@ -201,21 +202,28 @@ public class MyClient {
         return query;
     }
 
-    private static JSONObject shareCommand(CommandLine cmd, String uri) {
-        JSONObject fromPub = publishCommand(cmd, uri);
+    private static JSONObject shareCommand(CommandLine cmd) {
+        JSONObject share = publishCommand(cmd);
+        uri = cmd.getOptionValue("uri");
         String secret = cmd.hasOption("secret") ? cmd.getOptionValue("secret") : "";
-        fromPub.put("command", "SHARE");
-        fromPub.put("secret", secret);
-        return fromPub;
+        share.put("command", "SHARE");
+        share.put("secret", secret);
+        JSONObject resource = (JSONObject) share.get("resource");
+        resource.put("uri", uri);
+        return share;
     }
 
-    private static JSONObject removeCommand(CommandLine cmd, String uri) {
-        JSONObject fromPub = publishCommand(cmd, uri);
-        fromPub.put("command", "REMOVE");
-        return fromPub;
+    private static JSONObject removeCommand(CommandLine cmd) {
+        JSONObject remove = publishCommand(cmd);
+        uri = cmd.getOptionValue("uri");
+        remove.put("command", "REMOVE");
+        JSONObject resource = (JSONObject) remove.get("resource");
+        resource.put("uri", uri);
+        return remove;
     }
 
-    private static JSONObject publishCommand(CommandLine cmd, String uri) {
+    private static JSONObject publishCommand(CommandLine cmd) {
+        uri = cmd.getOptionValue("uri");
         name = cmd.hasOption("name") ? cmd.getOptionValue("name") : "";
         description = cmd.hasOption("description") ? cmd.getOptionValue("description") : "";
         channel = cmd.hasOption("channel") ? cmd.getOptionValue("channel") : "";
@@ -243,6 +251,11 @@ public class MyClient {
         return pub;
     }
 
+    /**
+     * connection and transmission.
+     * @param sendJson json object to be sent.
+     * @param cmd cmd may specify another server host and port number.
+     */
     private static void sendMessage(JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData;
@@ -250,12 +263,12 @@ public class MyClient {
             host = cmd.getOptionValue("host");
             port = Integer.parseInt(cmd.getOptionValue("port"));
         }
+        //TODO: dealing with situation that only being specified host or port number.
         Socket connection;
         try {
             connection = new Socket(host, port);
             DataInputStream in = new DataInputStream(connection.getInputStream());
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-//            System.out.println(connection.getRemoteSocketAddress());
 
             System.out.println("send to server:" + sendData);
 
