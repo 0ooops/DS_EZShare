@@ -61,13 +61,13 @@ public class Server {
                         sendMsg.add(PublishNShare.publish(cmd, resourceList, keys));
                         break;
                     case "REMOVE":
-                        remove(cmd);
+                    	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList));
                         break;
                     case "SHARE":
                         sendMsg.add(PublishNShare.share(cmd, resourceList, keys));
                         break;
                     case "FETCH":
-                        fetch(cmd);
+                    	sendMsg.add(RemoveAndFetch.fetch(cmd, resourceList));
                         break;
                     case "QUERY":
                         sendMsg = query(cmd);
