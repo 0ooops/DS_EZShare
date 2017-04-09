@@ -4,20 +4,15 @@ package Client;
  */
 
 import org.apache.commons.cli.*;
-import org.apache.commons.logging.*;
+import java.util.logging.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class MyClient {
-
-    //TODO:-debug
-    private static Log log = LogFactory.getLog(MyClient.class);
-//    private static final Logger LOGG = Logger.getLogger(MyClient.class);
+    private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     /**
      * default server host and port
@@ -78,6 +73,13 @@ public class MyClient {
             System.exit(1);
             return;
         }
+        setupLogger();
+        logr.info("setting debug on");
+        if (cmd.hasOption("port") && cmd.hasOption("host")) {
+            host = cmd.getOptionValue("host");
+            port = Integer.parseInt(cmd.getOptionValue("port"));
+        }
+        //TODO: dealing with situation that only being specified host or port number.
 /**
  * 1.judge whether the client gives any command.
  * 2.verify the command.
@@ -158,11 +160,12 @@ public class MyClient {
             String[] tempServer = sServer.split(":");
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
-            serv.put("port", tempServer[0]);
+            serv.put("port", tempServer[1]);
             serverlist.add(serv);
         }
         exchange.put("command", "EXCHANGE");
         exchange.put("serverlist", serverlist);
+        logr.fine("exchanging");
         return exchange;
     }
 
@@ -170,6 +173,7 @@ public class MyClient {
         JSONObject fetch = queryCommand(cmd);
         fetch.put("command", "FETCH");
         fetch.remove("relay");
+        logr.fine("fetching from " + host + ":" + port);
         return fetch;
     }
 
@@ -199,6 +203,7 @@ public class MyClient {
         query.put("resourceTemplate", resourceTemplate);
         query.put("command", "QUERY");
         query.put("relay", "true");
+        logr.fine("querying from " + host + ":" + port);
         return query;
     }
 
@@ -210,6 +215,7 @@ public class MyClient {
         share.put("secret", secret);
         JSONObject resource = (JSONObject) share.get("resource");
         resource.put("uri", uri);
+        logr.fine("sharing to " + host + ":" + port);
         return share;
     }
 
@@ -219,6 +225,7 @@ public class MyClient {
         remove.put("command", "REMOVE");
         JSONObject resource = (JSONObject) remove.get("resource");
         resource.put("uri", uri);
+        logr.fine("removing from " + host + ":" + port);
         return remove;
     }
 
@@ -248,36 +255,44 @@ public class MyClient {
         resource.put("ezserver", ezserver);
         pub.put("resource", resource);
         pub.put("command", "PUBLISH");
+        logr.fine("publishing to " + host + ":" + port);
         return pub;
     }
 
     /**
      * connection and transmission.
+     *
      * @param sendJson json object to be sent.
-     * @param cmd cmd may specify another server host and port number.
+     * @param cmd      cmd may specify another server host and port number.
      */
     private static void sendMessage(JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData;
-        if (cmd.hasOption("port") && cmd.hasOption("host")) {
-            host = cmd.getOptionValue("host");
-            port = Integer.parseInt(cmd.getOptionValue("port"));
-        }
-        //TODO: dealing with situation that only being specified host or port number.
+
+        logr.fine("SENT:" + sendData);
         Socket connection;
         try {
             connection = new Socket(host, port);
             DataInputStream in = new DataInputStream(connection.getInputStream());
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
-            System.out.println("send to server:" + sendData);
+//            System.out.println("send to server:" + sendData);
 
             out.writeUTF(sendData);
             out.flush();
             do {
-                receiveData = in.readUTF();
-                System.out.println("receive from server:" + receiveData);
+                String read = in.readUTF();
+                logr.fine("RECEIVED:" + read);
+//                System.out.println("receive from server:" + read);
             } while (in.available() > 0);
+            if (cmd.hasOption("debug")) {
+                //print logfile
+                BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    System.out.println(sCurrentLine);
+                }
+            }
             in.close();
             out.close();
             connection.close();
@@ -285,6 +300,20 @@ public class MyClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private static void setupLogger() {
+        LogManager.getLogManager().reset();
+        logr.setLevel(Level.ALL);
+        try {
+            FileHandler fh = new FileHandler("logfile.log");
+            fh.setLevel(Level.FINE);
+            logr.addHandler(fh);
+            MyFormatter formatter = new MyFormatter();
+//            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+        } catch (java.io.IOException e) {
+            logr.finer("File logger not working.");
+        }
     }
 }
