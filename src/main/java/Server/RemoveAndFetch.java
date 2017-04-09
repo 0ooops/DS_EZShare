@@ -119,46 +119,48 @@ public class RemoveAndFetch {
 								chk = true;
 								num++;
 								
-								
 								//fetch
-								try{
-									Socket s = null;
-									String ServerInfo = (String) resource.getEzServer();
-									int port = Integer.parseInt(ServerInfo.substring(ServerInfo.indexOf(":")));
-									ServerSocket ss = new ServerSocket(port);
-									while(true){
-										s = ss.accept();
-										DataInputStream dis = new DataInputStream(new BufferedInputStream(s.getInputStream()));
-										dis.readByte();
-										DataInputStream fis = new DataInputStream(new BufferedInputStream(new FileInputStream(uri)));
-										DataOutputStream ps = new DataOutputStream(s.getOutputStream());
-										ps.writeUTF(file.getName());
-										ps.flush();
-										ps.writeLong((long) file.length());
-										ps.flush();
-										
-										int bufferSize = 8192;
-										byte[] buf = new byte[bufferSize];
-										
-										while(true){
-											int read = 0;
-											if (fis != null){
-												read = fis.read(buf);
-											}
-											
-											if (read == -1){
-												break;
-											}
-											ps.write(buf, 0, read);
-										}
-										
-										ps.flush();
-										fis.close();
-										s.close();
-									}
+								if (uri.startsWith("files:\\/\\/") && file.exists()){
 									
-								}catch (Exception e){
+									try{
+										Socket s = null;
+										String ServerInfo = (String) resource.getEzServer();
+										int port = Integer.parseInt(ServerInfo.substring(ServerInfo.indexOf(":")));
+										ServerSocket ss = new ServerSocket(port);
+										while(true){
+											s = ss.accept();
+											DataInputStream dis = new DataInputStream(new BufferedInputStream(s.getInputStream()));
+											dis.readByte();
+											DataInputStream fis = new DataInputStream(new BufferedInputStream(new FileInputStream(uri)));
+											DataOutputStream ps = new DataOutputStream(s.getOutputStream());
+											ps.writeUTF(file.getName());
+											ps.flush();
+											ps.writeLong((long) file.length());
+											ps.flush();
+										
+											int bufferSize = 8192;
+											byte[] buf = new byte[bufferSize];
+										
+											while(true){
+												int read = 0;
+												if (fis != null){
+													read = fis.read(buf);
+												}
+											
+												if (read == -1){
+													break;
+												}
+												ps.write(buf, 0, read);
+											}
+										
+											ps.flush();
+											fis.close();
+											s.close();
+										}
+									
+									}catch (Exception e){
 									e.printStackTrace();
+									}
 								}
 								//fetch over
 								
@@ -167,7 +169,9 @@ public class RemoveAndFetch {
 						
 						//response
 						if (chk){
-							resTemp.put("resourceSize", file.length());
+							if (file.exists()){
+								resTemp.put("resourceSize", file.length());
+							}
 							response.put("response", "scuess");
 							response.put("resource", resTemp);
 				            response.put("resultSize", num);
