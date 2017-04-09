@@ -2,5 +2,6 @@
 .idea
 DS_Assignment1.iml
 DS_EZShare.iml
+pom.xml
 # Compiling
 *.class
