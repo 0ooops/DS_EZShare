@@ -1,4 +1,4 @@
-package Server;
+package main.java.Server;
 
 /**
  * This class is used as server side in client-server model. The server class
@@ -21,11 +21,17 @@ import java.util.HashMap;
 
 public class Server {
     private static HashMap<Integer, Resource> resourceList = new HashMap<Integer, Resource>();
-    private static ArrayList<HashMap> serverList = new ArrayList<HashMap>();
+    private static JSONArray serverList = new JSONArray();
     private static KeyList keys = new KeyList();
 
     public static void main(String[] args) {
         try{
+            //Test cases, can delete later
+            Resource src1 = new Resource("http://src1.com", "my", "fibby", "lala", "something", new ArrayList<>(),"");
+            Resource src2 = new Resource("", "", "", "lala", "something", new ArrayList<>(),"");
+            resourceList.put(1, src1);
+            resourceList.put(2, src2);
+
             int serverPort = Integer.parseInt(args[0]);
             boolean active = true;
             ServerSocketFactory factory = ServerSocketFactory.getDefault();
@@ -42,7 +48,6 @@ public class Server {
         }
     }
 
-
     private static void serveClient(Socket client) {
         String receiveData;
         JSONObject cmd;
@@ -50,11 +55,13 @@ public class Server {
         JSONArray sendMsg = new JSONArray();
 
         try(Socket clientSocket = client) {
+            System.out.println("The connection with " + clientSocket.toString() + " has been established.");
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
-            while(in.available() > 0) {
+             do {
                 receiveData = in.readUTF();
+                 System.out.println("Received command from client: " + receiveData);
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
@@ -70,10 +77,10 @@ public class Server {
                     	sendMsg.add(RemoveAndFetch.fetch(cmd, resourceList));
                         break;
                     case "QUERY":
-                        sendMsg = query(cmd);
+                        sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList));
                         break;
                     case "EXCHANGE":
-                        sendMsg = exchange(cmd);
+                        sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, clientSocket));
                         break;
                     default:
                         msg.put("response", "error");
@@ -81,146 +88,18 @@ public class Server {
                         sendMsg.add(msg);
                         break;
                 }
-                sendMsg.add(sendMsg);
                 out.writeUTF(sendMsg.toString());
                 out.flush();
-                in.close();
-                out.close();
-                clientSocket.close(); //test下有没有问题
-            }
+            } while(in.available() > 0);
+
+            in.close();
+            out.close();
+            clientSocket.close();
+            System.out.print("The connection with " + clientSocket.toString() + " has been closed.");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-
-    //This function is mainly for parsing the "relay" argument and overall control.
-    public static JSONArray query (JSONObject command) {
-        Boolean relay = (Boolean)command.get("relay");
-        JSONObject response = new JSONObject();
-        JSONObject size = new JSONObject();
-        JSONArray fullQueryList = new JSONArray();
-        if(!command.containsKey("resourceTemplate")) {
-            response.put("response","error");
-            response.put("errorMessage","missing resourceTemplate");
-            fullQueryList.add(response);
-            return fullQueryList;
-        } else {
-            response.put("response", "success");
-            fullQueryList.add(response);
-            if (!relay) {
-                fullQueryList.add(selfQuery(command));
-            } else {
-                command.put("relay", false);
-                fullQueryList = selfQuery(command);
-                for(int i = 0; i < serverList.size(); i++) {
-                    fullQueryList.addAll(otherQuery(serverList.get(i), command));
-                }
-            }
-            size.put("resultSize",fullQueryList.size() - 1);
-            fullQueryList.add(size);
-            return fullQueryList;
-        }
-    }
-
-    //This function is used for query the resource on this server.
-    public static JSONArray selfQuery(JSONObject command) {
-        JSONArray queryList = new JSONArray();
-        JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
-
-        for(int i = 0; i < resourceList.size(); i++) {
-            Boolean channel = false, owner = false, tags = true, uri = false;
-            Boolean name = false, description = false, nameDescription = false;
-            Resource src = resourceList.get(i);
-            String[] cmdTags = (String[])cmd.get("tags");
-            String cmdName = cmd.get("name").toString();
-            String cmdDescription = cmd.get("description").toString();
-
-            if (cmd.get("channel").equals(src.getChannel())) {
-                channel = true;
-            }
-            if (cmd.get("owner").equals(src.getOwner())) {
-                owner = true;
-            }
-            if (cmdTags.length != 0) {
-                for(int j = 0; j < cmdTags.length; j++) {
-                    if (!src.getTags().contains(cmdTags[j])) {
-                        tags = false;
-                    }
-                }
-            }
-            if (cmd.get("uri").equals(src.getUri())) {
-                uri = true;
-            }
-            if ((!cmdName.equals("")) && src.getName().contains(cmdName)) {
-                name = true;
-            }
-            if ((!cmdDescription.equals("")) && src.getDescription().contains(cmdDescription)) {
-                description = true;
-            }
-            if (cmdName.equals("") && cmdDescription.equals("")) {
-                nameDescription = true;
-            }
-            if (channel && owner && tags && uri && (name || description || nameDescription)) {
-                queryList.add(src.toJSON());
-            }
-        }
-        return queryList;
-    }
-
-    // This function is for one server to query the resource on another server.
-    public static JSONArray otherQuery(HashMap serverPort, JSONObject command) {
-        String server = serverPort.get("hostname").toString();
-        int port = (int) serverPort.get("port");
-        String sendData = command.toString(); //我这里相当于假定Client端负责解析，Server端收到的是toString过的JSON
-        JSONArray queryList;
-
-        String receiveData = serverSend(server, port, sendData);
-        queryList = JSONArray.fromObject(receiveData);
-
-        return queryList;
-    }
-
-    // This function is for one server to send data to another server.
-    public static String serverSend(String server, int port, String data) {
-        String receiveData = "";
-        try {
-            Socket connection = new Socket(server, port);
-            DataInputStream in = new DataInputStream(connection.getInputStream());
-            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-
-            out.writeUTF(data);
-            out.flush();
-            receiveData = in.readUTF();
-
-            connection.close();
-
-        } catch (IOException e){
-            e.printStackTrace();
-        } finally {
-            return receiveData;
-        }
-    }
-
-    public static JSONArray exchange (JSONObject command) {
-        ArrayList<HashMap> newList = (ArrayList<HashMap>)command.get("serverList");
-        JSONArray msgArray = new JSONArray();
-        JSONObject msg = new JSONObject();
-
-        for (int i = 0; i < newList.size(); i++) {
-            if (!serverList.contains(newList.get(i))) { // double check whether contains work for this case
-                serverList.add(newList.get(i));
-                String host = newList.get(i).get("hostname").toString();
-                int port = (int)newList.get(i).get("port");
-                Query.serverSend(host, port, command.toString());
-            }
-        }
-
-        msg.put("response", "success");
-        msgArray.add(msg);
-
-        return msgArray;
-    }
 }

@@ -1,4 +1,4 @@
-package Client;
+package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
@@ -17,8 +17,10 @@ public class MyClient {
     /**
      * default server host and port
      */
-    private static int port = 3780;
-    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 3780;
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+    private static int port = 6783;
+    private static String host = "localhost";
 
     private static String channel = "";
     private static String description = "";
@@ -147,7 +149,6 @@ public class MyClient {
                     System.exit(1);
             }
         }
-
 
     }
 
@@ -279,11 +280,12 @@ public class MyClient {
 //            System.out.println("send to server:" + sendData);
 
             out.writeUTF(sendData);
+            System.out.println("Sending data: " + sendData);
             out.flush();
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
-//                System.out.println("receive from server:" + read);
+                System.out.println("receive from server:" + read); //打印需要format
             } while (in.available() > 0);
             if (cmd.hasOption("debug")) {
                 //print logfile

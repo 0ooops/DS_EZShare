@@ -1,0 +1,4 @@
+09/04/2017 08:59:50.495 - [main.java.Client.MyClient.main] - [INFO] - setting debug on
+09/04/2017 08:59:50.668 - [main.java.Client.MyClient.exchangeCommand] - [FINE] - exchanging
+09/04/2017 08:59:50.668 - [main.java.Client.MyClient.sendMessage] - [FINE] - SENT:{"command":"EXCHANGE","serverlist":[{"hostname":"localhost","port":"8000"}]}
+09/04/2017 08:59:50.703 - [main.java.Client.MyClient.sendMessage] - [FINE] - RECEIVED:[{"response":"the server/port pair has already been known by the current server"}]
