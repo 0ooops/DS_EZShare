@@ -305,7 +305,7 @@ public class MyClient {
             e.printStackTrace();
         }
     }
-    ///Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Client/Client.java
+
     private static void setupLogger() {
         LogManager.getLogManager().reset();
         logr.setLevel(Level.ALL);
