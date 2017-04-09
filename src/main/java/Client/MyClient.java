@@ -160,7 +160,7 @@ public class MyClient {
             String[] tempServer = sServer.split(":");
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
-            serv.put("port", tempServer[0]);
+            serv.put("port", tempServer[1]);
             serverlist.add(serv);
         }
         exchange.put("command", "EXCHANGE");
