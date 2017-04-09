@@ -1,10 +1,10 @@
-package Client;
+package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
 
 import org.apache.commons.cli.*;
-import org.apache.commons.logging.*;
+//import org.apache.commons.logging.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -21,8 +21,10 @@ public class MyClient {
     /**
      * default server host and port
      */
-    private static int port = 3780;
-    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 3780;
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+    private static int port = 6783;
+    private static String host = "localhost";
 
     private static String channel = "";
     private static String description = "";
@@ -152,7 +154,6 @@ public class MyClient {
             }
         }
 
-
     }
 
     private static JSONObject exchangeCommand(CommandLine cmd) {
@@ -164,7 +165,7 @@ public class MyClient {
             String[] tempServer = sServer.split(":");
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
-            serv.put("port", tempServer[0]);
+            serv.put("port", tempServer[1]);
             serverlist.add(serv);
         }
         exchange.put("command", "EXCHANGE");
@@ -283,11 +284,12 @@ public class MyClient {
 //            System.out.println("send to server:" + sendData);
 
             out.writeUTF(sendData);
+            System.out.println("Sending data: " + sendData);
             out.flush();
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
-//                System.out.println("receive from server:" + read);
+                System.out.println("receive from server:" + read); //打印需要format
             } while (in.available() > 0);
             if (cmd.hasOption("debug")) {
                 //print logfile
