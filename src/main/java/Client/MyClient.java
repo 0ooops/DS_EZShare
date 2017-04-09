@@ -4,16 +4,12 @@ package Client;
  */
 
 import org.apache.commons.cli.*;
-import org.apache.commons.logging.*;
+import java.util.logging.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 public class MyClient {
     private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
