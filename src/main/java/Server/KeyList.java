@@ -1,15 +1,16 @@
-package main.java.Server;
+package Server;
 import java.util.HashMap;
 
 /**
  * A class that represent the list of primary keys
+ * created by Jiacheng Chen
  */
 public class KeyList {
     private HashMap<String, HashMap<String, HashMap<String, Integer>>> keys;
     private Integer index;
 
     public KeyList() {
-        keys = new HashMap<String, HashMap<String, HashMap<String, Integer>>>();
+        keys = new HashMap<>();
         index = 0;
     }
 
