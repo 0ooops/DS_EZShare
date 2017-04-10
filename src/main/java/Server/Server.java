@@ -1,4 +1,4 @@
-package main.java.Server;
+package Server;
 
 /**
  * This class is used as server side in client-server model. The server class
@@ -65,13 +65,17 @@ public class Server {
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
-                        sendMsg.add(PublishNShare.publish(cmd, resourceList, keys));
+                        sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
+                                clientSocket.getLocalAddress().getHostAddress().toString(),
+                                clientSocket.getLocalPort()));
                         break;
                     case "REMOVE":
                     	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList));
                         break;
                     case "SHARE":
-                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys));
+                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys,
+                                clientSocket.getLocalAddress().getHostAddress().toString(),
+                                clientSocket.getLocalPort()));
                         break;
                     case "FETCH":
                     	sendMsg.add(RemoveAndFetch.fetch(cmd, resourceList));

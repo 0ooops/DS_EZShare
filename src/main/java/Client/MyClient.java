@@ -21,7 +21,7 @@ public class MyClient {
      */
 //    private static int port = 3780;
 //    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 6783;
+    private static int port = 8000;
     private static String host = "localhost";
 
     private static String channel = "";
@@ -294,7 +294,7 @@ public class MyClient {
 //            System.out.println("send to server:" + sendData);
 
             out.writeUTF(sendData);
-            System.out.println("Sending data: " + sendData);
+//            System.out.println("Sending data: " + sendData);
             out.flush();
             logr.fine("SENT:" + sendData);
             do {

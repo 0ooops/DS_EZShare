@@ -1,4 +1,4 @@
-package main.java.Server;
+package Server;
 
 import net.sf.json.JSONObject;
 import java.util.HashMap;

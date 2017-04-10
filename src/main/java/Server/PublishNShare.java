@@ -1,4 +1,9 @@
-package main.java.Server;
+package Server;
+
+/**
+ * public and share funtions
+ * created by Jiacheng Chen
+ */
 
 import net.sf.json.JSONObject;
 import java.io.File;
@@ -6,9 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-/**
- * public and share funtions
- */
 public class PublishNShare {
 
     /**
@@ -17,7 +19,8 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
+    public static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+                                     String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
@@ -42,7 +45,7 @@ public class PublishNShare {
                     response.put("errorMessage", "cannot publish resource");
                 } else {
                     //create a resource and add to the resource list
-                    Resource res = getResource(resJSON);
+                    Resource res = getResource(resJSON, address, port);
                     int index = keys.put(res);
                     //System.out.println(index);
 
@@ -84,7 +87,8 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys) {
+    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+                                   String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
@@ -115,7 +119,7 @@ public class PublishNShare {
                             response.put("errorMessage", "cannot share resource");
                         } else {
                             //create a resource and add to the resource list
-                            Resource res = getResource(resJSON);
+                            Resource res = getResource(resJSON, address, port);
                             int index = keys.put(res);
 
                             /*
@@ -167,7 +171,7 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    private static Resource getResource(JSONObject obj) {
+    private static Resource getResource(JSONObject obj, String address, int port) {
         //get resource parameters
         String uri = (String)obj.get("uri");
 
@@ -196,10 +200,7 @@ public class PublishNShare {
             tags = (ArrayList<String>)obj.get("tags");
         }
 
-        String server = "";
-        if (obj.containsKey("ezserver")) {
-            server = (String) obj.get("ezserver");
-        }
+        String server = address + ":" + port;
 
         //new resource
         Resource res = new Resource(uri, channel, owner, name, des, tags, server);
