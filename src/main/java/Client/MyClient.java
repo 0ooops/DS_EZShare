@@ -4,7 +4,9 @@ package Client;
  */
 
 import org.apache.commons.cli.*;
+
 import java.util.logging.*;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -75,13 +77,26 @@ public class MyClient {
             System.exit(1);
             return;
         }
+
+        if (cmd.hasOption("port") || cmd.hasOption("host")) {
+            if (cmd.hasOption("port") && cmd.hasOption("host")) {
+                host = cmd.getOptionValue("host");
+                try {
+                    port = Integer.parseInt(cmd.getOptionValue("port"));
+                } catch (NumberFormatException E) {
+                    System.out.println("please give a valid port number~");
+                    System.exit(1);
+                    return;
+                }
+            } else {
+                System.out.println("please give both hostname and port number~");
+                System.exit(1);
+                return;
+            }
+        }
+
         setupLogger();
         logr.info("setting debug on");
-        if (cmd.hasOption("port") && cmd.hasOption("host")) {
-            host = cmd.getOptionValue("host");
-            port = Integer.parseInt(cmd.getOptionValue("port"));
-        }
-        //TODO: dealing with situation that only being specified host or port number.
 /**
  * 1.judge whether the client gives any command.
  * 2.verify the command.
@@ -270,7 +285,6 @@ public class MyClient {
         String sendData = sendJson.toString();
         String receiveData;
 
-        logr.fine("SENT:" + sendData);
         Socket connection;
         try {
             connection = new Socket(host, port);
@@ -282,6 +296,7 @@ public class MyClient {
             out.writeUTF(sendData);
             System.out.println("Sending data: " + sendData);
             out.flush();
+            logr.fine("SENT:" + sendData);
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
@@ -290,6 +305,8 @@ public class MyClient {
             if (cmd.hasOption("debug")) {
                 //print logfile
                 BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
+                //uncomment below if running in maven before build.
+                //BufferedReader br = new BufferedReader(new FileReader("src/main/java/Client/logfile.log"));
                 String sCurrentLine;
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
@@ -309,6 +326,8 @@ public class MyClient {
         logr.setLevel(Level.ALL);
         try {
             FileHandler fh = new FileHandler("logfile.log");
+            //uncomment below if running in maven before build.
+            //FileHandler fh = new FileHandler("src/main/java/Client/logfile.log");
             fh.setLevel(Level.FINE);
             logr.addHandler(fh);
             MyFormatter formatter = new MyFormatter();
