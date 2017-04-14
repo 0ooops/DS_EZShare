@@ -1,4 +1,5 @@
-package Server;
+//package Server;
+package main.java.Server;
 /**
  * The class Resource is an entity used for storing resources records.
  * The constructor of the class requires the value of uri, because uri

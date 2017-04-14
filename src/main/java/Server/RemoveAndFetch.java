@@ -1,5 +1,5 @@
-package Server;
-
+//package Server;
+package main.java.Server;
 import net.sf.json.JSONObject;
 import java.util.HashMap;
 import java.io.BufferedInputStream;

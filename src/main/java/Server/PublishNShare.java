@@ -1,5 +1,5 @@
-package Server;
-
+//package Server;
+package main.java.Server;
 /**
  * public and share funtions
  * created by Jiacheng Chen
@@ -41,7 +41,7 @@ public class PublishNShare {
                 if (uri.equals("") || owner.equals("*")) {
                     response.put("response", "error");
                     response.put("errorMessage", "invalid resource");
-                } else if (!(uri.startsWith("http:\\/\\/") || uri.startsWith("ftp:\\/\\/"))) {
+                } else if (!(uri.startsWith("http://") || uri.startsWith("ftp://"))) {
                     response.put("response", "error");
                     response.put("errorMessage", "cannot publish resource");
                 } else {
@@ -88,7 +88,7 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
                                    String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
@@ -97,7 +97,7 @@ public class PublishNShare {
         //check if json contains a secret
         if (obj.containsKey("secret") || obj.get("secret").equals("")) {
             //check if the secret is valid
-            if (obj.get("secret").equals("abc")) {
+            if (obj.get("secret").equals(secret)) {
                 //check if there is a resource
                 if (obj.containsKey("resource")) {
                     //get the resources json
@@ -117,7 +117,7 @@ public class PublishNShare {
                             response.put("errorMessage", "invalid resource");
                         } else if (!f.exists()) {
                             response.put("response", "error");
-                            response.put("errorMessage", "missing resource and\\/or secret");
+                            response.put("errorMessage", "missing resource and/or secret");
                         } else {
                             //create a resource and add to the resource list
                             Resource res = getResource(resJSON, address, port);

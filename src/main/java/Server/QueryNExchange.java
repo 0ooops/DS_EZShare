@@ -1,12 +1,11 @@
-package Server;
-
+//package Server;
+package main.java.Server;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class QueryNExchange {
@@ -16,6 +15,8 @@ public class QueryNExchange {
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
+        int querySize = 0;
+        JSONArray compare = new JSONArray();
 
         if(!command.containsKey("resourceTemplate")) {
             response.put("response","error");
@@ -34,7 +35,11 @@ public class QueryNExchange {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
-            size.put("resultSize", fullQueryList.size() - 2);
+            querySize = fullQueryList.size() - 1;
+            if (fullQueryList.getJSONArray(1).equals(compare)) {
+                querySize--;
+            }
+            size.put("resultSize", querySize);
             fullQueryList.add(size);
             return fullQueryList;
         }
@@ -132,7 +137,6 @@ public class QueryNExchange {
         JSONArray newList = command.getJSONArray("serverlist");
         JSONArray msgArray = new JSONArray();
         JSONObject msg = new JSONObject();
-        JSONArray currentList = new JSONArray();
         JSONObject currentServer = new JSONObject();
         String receiveData;
         currentServer.put("hostname", clientSocket.getLocalAddress().getHostAddress());
@@ -141,13 +145,9 @@ public class QueryNExchange {
         for (int i = 0; i < newList.size(); i++) {
             if (newList.getJSONObject(i).get("port").toString().equals(currentServer.get("port").toString())) {
                 msg.put("response", "success");
-            } else if (!serverList.contains(newList.get(i))) { // double check whether contains work for this case
+            } else if (!serverList.contains(newList.get(i))) {
                 String host = newList.getJSONObject(i).get("hostname").toString();
                 int port = Integer.parseInt(newList.getJSONObject(i).get("port").toString());
-//                currentServer.put("hostname", clientSocket.getLocalAddress().getHostAddress());
-//                currentServer.put("port", clientSocket.getLocalPort());
-//                currentList.add(currentServer);
-//                command.put("serverlist", currentList);
                 receiveData = serverSend(host, port, command.toString());
 
                 if (receiveData != null) {

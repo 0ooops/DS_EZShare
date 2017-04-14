@@ -1,5 +1,5 @@
-package Server;
-
+//package Server;
+package main.java.Server;
 /**
  * This class is used as server side in client-server model. The server class
  * basically takes responsibility for accepting connection with client, and
@@ -15,23 +15,17 @@ import javax.net.ServerSocketFactory;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 
 public class Server {
-    private static HashMap<Integer, Resource> resourceList = new HashMap<Integer, Resource>();
+    private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static JSONArray serverList = new JSONArray();
     private static KeyList keys = new KeyList();
+    private static final String secret = "abc";
 
     public static void main(String[] args) {
         try{
-            //Test cases, can delete later
-            Resource src1 = new Resource("http://src1.com", "my", "fibby", "lala", "something", new ArrayList<>(),"");
-            Resource src2 = new Resource("", "", "", "lala", "something", new ArrayList<>(),"");
-            resourceList.put(1, src1);
-            resourceList.put(2, src2);
-
             int serverPort = Integer.parseInt(args[0]);
             boolean active = true;
             ServerSocketFactory factory = ServerSocketFactory.getDefault();
@@ -59,7 +53,7 @@ public class Server {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
-             do {
+            do {
                 receiveData = in.readUTF();
                  System.out.println("Received command from client: " + receiveData);
                 cmd = JSONObject.fromObject(receiveData);
@@ -73,7 +67,7 @@ public class Server {
                     	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList));
                         break;
                     case "SHARE":
-                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys,
+                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
                                 clientSocket.getLocalAddress().getHostAddress().toString(),
                                 clientSocket.getLocalPort()));
                         break;
@@ -92,7 +86,9 @@ public class Server {
                         sendMsg.add(msg);
                         break;
                 }
+                System.out.println("Sending data to client: " + sendMsg.toString());
                 out.writeUTF(sendMsg.toString());
+                Thread.sleep(5000);
                 out.flush();
             } while(in.available() > 0);
 
@@ -102,6 +98,8 @@ public class Server {
             System.out.print("The connection with " + clientSocket.toString() + " has been closed.");
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

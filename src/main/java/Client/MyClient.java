@@ -1,4 +1,5 @@
-package Client;
+//package Client;
+package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
@@ -300,7 +301,7 @@ public class MyClient {
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
-//                System.out.println("receive from server:" + read); //打印需要format
+                System.out.println("receive from server:" + read); //打印需要format
             } while (in.available() > 0);
             if (cmd.hasOption("debug")) {
                 //print logfile

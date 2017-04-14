@@ -1,0 +1,10 @@
+-publish -name "lms" -tags ["web", "html"] -description "The LMS page for unimelb." -uri "http://www.lms.unimelb.edu.au"
+
+issues: 
+1.client   "tags":["[web"]
+2.publish has problem with http://  modified
+
+-query
+
+issues:
+1.nothing print out from client, should add print
