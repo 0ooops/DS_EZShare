@@ -55,16 +55,18 @@ public class Server {
         String receiveData;
         JSONObject cmd;
         JSONObject msg = null;
+        JSONArray fileResponse;
         JSONArray sendMsg = new JSONArray();
 
         try(Socket clientSocket = client) {
             System.out.println("The connection with " + clientSocket.toString() + " has been established.");
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+            FileInputStream file = null;
 
             do {
                 receiveData = in.readUTF();
-                 System.out.println("Received command from client: " + receiveData);
+                System.out.println("Received command from client: " + receiveData);
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
@@ -83,7 +85,12 @@ public class Server {
                                 clientSocket.getLocalPort()));
                         break;
                     case "FETCH":
-                    	sendMsg.add(RemoveAndFetch.fetch(cmd, resourceList));
+                        fileResponse = RemoveAndFetch.fetch(cmd, resourceList);
+                        sendMsg.addAll(fileResponse);
+                        if (fileResponse.getJSONObject(0).get("response").equals("success")) {
+                            String uri = cmd.getJSONObject("resourceTemplate").get("uri").toString();
+                            file = new FileInputStream(uri);
+                        }
                         break;
                     case "QUERY":
                         sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList));
@@ -99,12 +106,19 @@ public class Server {
                 }
                 System.out.println("Sending data to client: " + sendMsg.toString());
                 out.writeUTF(sendMsg.toString());
-                Thread.sleep(5000);
+                Thread.sleep(3000);
                 out.flush();
+                if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
+                    byte[] buffer = new byte[4000];
+                    while (file.read(buffer) > 0) {
+                        out.write(buffer);
+                    }
+                    out.flush();
+                }
             } while(in.available() > 0);
 
-            in.close();
             out.close();
+            file.close();
             clientSocket.close();
             System.out.println("The connection with " + clientSocket.toString() + " has been closed.");
 
@@ -120,9 +134,9 @@ public class Server {
         JSONArray msgArray = new JSONArray();
         JSONObject msg = new JSONObject();
 
-        if (command.containsKey("serverlist")) {
-            if (command.getJSONArray("serverlist").size() != 0) {
-                newList = command.getJSONArray("serverlist");
+        if (command.containsKey("serverList")) {
+            if (command.getJSONArray("serverList").size() != 0) {
+                newList = command.getJSONArray("serverList");
                 for (int i = 0; i < newList.size(); i++) {
                     if (!serverList.contains(newList.getJSONObject(i))) {
                         serverList.add(newList.getJSONObject(i));
@@ -154,7 +168,7 @@ public class Server {
                     int port = Integer.parseInt(serverList.getJSONObject(select).get("port").toString());
                     JSONObject cmd = new JSONObject();
                     cmd.put("command", "EXCHANGE");
-                    cmd.put("serverlist", serverList);
+                    cmd.put("serverList", serverList);
                     receiveData = QueryNExchange.serverSend(host, port, cmd.toString());
                     if (receiveData.equals("connection failed")) {
                         serverList.remove(select);
