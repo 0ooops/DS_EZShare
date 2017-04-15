@@ -19,11 +19,12 @@ public class MyClient {
     /**
      * default server host and port
      */
-//    private static int port = 3780;
-//    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 8000;
-    private static String host = "localhost";
-
+//    private static int port = 3300;
+//    private static String host = "http://115.146.93.106";
+//    private static int port = 8000;
+//    private static String host = "localhost";
+    private static String host = "sunrise.cis.unimelb.edu.au";
+    private static int port = 3780;
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -297,6 +298,12 @@ public class MyClient {
 //            System.out.println("Sending data: " + sendData);
             out.flush();
             logr.fine("SENT:" + sendData);
+            try {
+                connection.setSoTimeout(10*1000);
+            }catch (Exception e){
+                System.out.println("connection fail");
+                System.exit(1);
+            }
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
