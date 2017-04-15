@@ -68,12 +68,14 @@ public class Server {
                 cmd = JSONObject.fromObject(receiveData);
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
+                        System.out.println("ResouceList Before Change:" + resourceList);
                         sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
                                 clientSocket.getLocalAddress().getHostAddress().toString(),
                                 clientSocket.getLocalPort()));
+                        System.out.println("ResourceList After Change:" + resourceList);
                         break;
                     case "REMOVE":
-                    	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList));
+                    	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList, keys));
                         break;
                     case "SHARE":
                         sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,

@@ -9,90 +9,33 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-//import java.util.ArrayList;
 
 public class RemoveAndFetch {
 	
-	public static JSONObject remove(JSONObject json, HashMap<Integer, Resource> resourceList){
-		
-		JSONObject response = new JSONObject();
-		
-		if (json.containsKey("resource")) {
-			
-			JSONObject resFromJson = (JSONObject) json.get("resource");
-			
-			if (resFromJson.containsKey("uri")){
-				String uri = (String) resFromJson.get("uri");
-				
-				
-				if (uri.startsWith("http:\\/\\/")||uri.startsWith("files:\\/\\/")){
-					
-					/*
-					Resource res = getResource(resFromJson);            
-					int index = keys.put(res);
-					if (index >= 0){
-						resourceList.remove(index);//remove from list
-					
-						if(uri.startsWith("files:\\/\\/")){
-							//remove file
-							File file = new File(uri);
-							if (file.exists()){
-								file.delete();
-							}else{
-								response.put("response", "error");
-					            response.put("errorMessage", "cannot remove resource");
-							}		
-							response.put("response", "success");
-							
-						}else{
-							response.put("response", "error");
-							response.put("errorMessage", "cannot remove resource");
-						}
-					}else{
-						response.put("response", "error");
-			            response.put("errorMessage", "cannot remove resource");
-					}		
-					*/
-					
-					
-					Boolean chk = false;
-					for(int i = 0; i < resourceList.size(); i++) {
-						Resource resource = resourceList.get(i);
-						if (uri.equals(resource.getUri())){
-							chk = true;
-							resourceList.remove(i);
-							if (uri.startsWith("files:\\/\\/")){
-								File file = new File(uri);
-								if (file.exists()){
-									file.delete();									
-								}
-							}
-						}
-					}
-					if (chk){
-						response.put("response", "success");
-					}else{
-						response.put("response", "error");
-			            response.put("errorMessage", "cannot remove resource");
-					}
-					
+	public static JSONObject remove(JSONObject command, HashMap<Integer, Resource> resourceList, KeyList keys) {
 
-					
-				}else{
-					response.put("response", "error");
-		            response.put("errorMessage", "invalid resource");
-				}								
-			}else{
-				response.put("response", "error");
-	            response.put("errorMessage", "invalid resource");	
-			}
-		}else{
+		JSONObject response = new JSONObject();
+
+		if (!command.containsKey("resource")) {
 			response.put("response", "error");
-            response.put("errorMessage", "missing resource");
+			response.put("errorMessage", "missing resource");
+		} else if (!command.getJSONObject("resource").containsKey("uri")) {
+			response.put("response", "error");
+			response.put("errorMessage", "invalid resource");
+		} else {
+			String cmdUri = command.getJSONObject("resource").getString("uri");
+			String cmdOwner = command.getJSONObject("resource").getString("owner");
+			String cmdChannel = command.getJSONObject("resource").getString("channel");
+			for (Resource src : resourceList.values()) {
+				if (cmdChannel.equals(src.getChannel()) && cmdOwner.equals(src.getOwner()) && cmdUri.equals(src.getUri())) {
+					while (resourceList.values().remove(src)) ;
+					keys.remove(cmdChannel, cmdUri, cmdOwner);
+					response.put("response", "success");
+					break;
+				}
+			}
 		}
-		
 		return response;
-		
 	}
 	
 	
@@ -108,7 +51,7 @@ public class RemoveAndFetch {
 				if (resTemp.containsKey("channal")){
 					String uri = (String) resTemp.get("uri");
 					String channal = (String) resTemp.get("channal");
-					if ((uri.startsWith("http:\\/\\/")||uri.startsWith("files:\\/\\/")) && (!channal.equals(""))){
+					if ((uri.startsWith("http://")||uri.startsWith("files://")) && (!channal.equals(""))){
 						
 						File file = new File(uri);
 						Boolean chk = false;
@@ -120,7 +63,7 @@ public class RemoveAndFetch {
 								num++;
 								
 								//fetch
-								if (uri.startsWith("files:\\/\\/") && file.exists()){
+								if (uri.startsWith("files://") && file.exists()){
 									
 									try{
 										Socket s = null;

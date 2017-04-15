@@ -9,13 +9,13 @@ import java.net.Socket;
 import java.util.HashMap;
 
 public class QueryNExchange {
+
     //This function is mainly for parsing the "relay" argument and overall control.
     public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList) {
         boolean relay = Boolean.parseBoolean(command.get("relay").toString());
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
-        JSONArray compare = new JSONArray();
         int querySize;
 
         if(!command.containsKey("resourceTemplate")) {
@@ -31,13 +31,13 @@ public class QueryNExchange {
             } else {
                 command.put("relay", false);
                 fullQueryList.add(selfQuery(command, resourceList));
-                for(int i = 0; i < serverList.size(); i++) {
+                for(int i = 1; i < serverList.size(); i++) {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
             querySize = fullQueryList.size() - 1;
-            if (fullQueryList.getJSONArray(1).equals(compare)) {
-                querySize--;
+            if (fullQueryList.getJSONArray(1).size() == 0) {
+                querySize = 0;
             }
             size.put("resultSize", querySize);
             fullQueryList.add(size);
@@ -49,17 +49,14 @@ public class QueryNExchange {
     public static JSONArray selfQuery(JSONObject command, HashMap<Integer, Resource> resourceList) {
         JSONArray queryList = new JSONArray();
         JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
+        JSONArray cmdTagsJson = cmd.getJSONArray("tags");
+        String[] cmdTags = cmdTagsJson.toString().substring(1, cmdTagsJson.toString().length() - 1).split(",");
+        String cmdName = cmd.get("name").toString();
+        String cmdDescription = cmd.get("description").toString();
 
         for(Resource src : resourceList.values()) {
             Boolean channel = true, owner = true, tags = true, uri = true;
             Boolean name = false, description = false, nameDescription = false;
-            JSONArray cmdTagsJson = cmd.getJSONArray("tags");
-            String[] cmdTags = cmdTagsJson.toString().substring(1, cmdTagsJson.toString().length() - 1).split(",");
-            String cmdName = cmd.get("name").toString();
-            String cmdDescription = cmd.get("description").toString();
-
-            System.out.println(cmd.toString());
-            System.out.println(src.toString());
 
             if (!cmd.get("channel").equals("") && !cmd.get("channel").equals(src.getChannel())) {
                 channel = false;
