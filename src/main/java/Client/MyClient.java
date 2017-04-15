@@ -126,7 +126,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendPub = publishCommand(cmd);
-                        sendMessage(sendPub, cmd);
+                        sendMessage(command,sendPub, cmd);
 
                     }
                     break;
@@ -137,7 +137,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendRem = removeCommand(cmd);
-                        sendMessage(sendRem, cmd);
+                        sendMessage(command,sendRem, cmd);
                     }
                     break;
                 case SHARE:
@@ -147,16 +147,16 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendShare = shareCommand(cmd);
-                        sendMessage(sendShare, cmd);
+                        sendMessage(command,sendShare, cmd);
                     }
                     break;
                 case QUERY:
                     JSONObject sendQuery = queryCommand(cmd);
-                    sendMessage(sendQuery, cmd);
+                    sendMessage(command,sendQuery, cmd);
                     break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
-                    sendMessage(sendFetch, cmd);
+                    sendMessage(command,sendFetch, cmd);
                     break;
                 case EXCHANGE:
                     if (!cmd.hasOption("servers")) {
@@ -165,7 +165,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendExchange = exchangeCommand(cmd);
-                        sendMessage(sendExchange, cmd);
+                        sendMessage(command,sendExchange, cmd);
                     }
                     break;
                 default:
@@ -290,7 +290,7 @@ public class MyClient {
      * @param sendJson json object to be sent.
      * @param cmd      cmd may specify another server host and port number.
      */
-    private static void sendMessage(JSONObject sendJson, CommandLine cmd) {
+    private static void sendMessage(String command,JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData;
 
@@ -312,11 +312,17 @@ public class MyClient {
                 System.out.println("connection fail");
                 System.exit(1);
             }
-            do {
-                String read = in.readUTF();
-                logr.fine("RECEIVED:" + read);
-                System.out.println("receive from server:" + read); //打印需要format
-            } while (in.available() > 0);
+            if (!command.equals(FETCH)){
+                do {
+                    Thread.sleep(1*1000);
+                    String read = in.readUTF();
+                    logr.fine("RECEIVED:" + read);
+                    System.out.println("receive from server:" + read); //打印需要format
+                } while (in.available() > 0);
+            } else {
+
+            }
+
             if (cmd.hasOption("debug")) {
                 //print logfile
                 BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
@@ -334,6 +340,8 @@ public class MyClient {
         } catch (IOException e) {
             System.out.println("connection fail pls specify a correct host and port");
             System.exit(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
