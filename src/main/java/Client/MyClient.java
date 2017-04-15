@@ -341,7 +341,7 @@ public class MyClient {
                     byte[] buffer = new byte[4096];
                     int read;
                     int remaining = filesize;
-                    System.out.println("receiving..");
+                    System.out.println("receiving...");
                     while ((read = in.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
                         remaining -= read;
 //                        System.out.println("read " + totalRead + " bytes.");
@@ -349,6 +349,7 @@ public class MyClient {
                     }
                     System.out.println("done");
                 }
+
             }
             if (cmd.hasOption("debug")) {
                 //print logfile
@@ -359,7 +360,7 @@ public class MyClient {
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
                 }
-            } else {
+            } else if (!command.equals(FETCH)){
                 //print out
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
                 JSONObject resp = recv.getJSONObject(0);
