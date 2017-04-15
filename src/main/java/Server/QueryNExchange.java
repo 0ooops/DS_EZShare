@@ -35,9 +35,9 @@ public class QueryNExchange {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
-            if (fullQueryList.getJSONObject(1).containsKey("name")) {
-                querySize = fullQueryList.size() - 1;
-            }
+//            if (fullQueryList.size() >= 1 && fullQueryList.getJSONObject(1).containsKey("name")) {
+//                querySize = fullQueryList.size() - 1;
+//            }
             size.put("resultSize", querySize);
             fullQueryList.add(size);
             return fullQueryList;

@@ -6,13 +6,17 @@ package Client;
 
 import org.apache.commons.cli.*;
 
+import java.util.Random;
 import java.util.logging.*;
 
+import net.sf.json.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
+
+import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 public class MyClient {
     private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
@@ -23,10 +27,10 @@ public class MyClient {
 
 //    private static int port = 3300;
 //    private static String host = "http://115.146.93.106";
-//    private static int port = 8000;
-//    private static String host = "localhost";
-    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 3780;
+    private static int port = 8000;
+    private static String host = "localhost";
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 3780;
 
 //    private static int port = 3780;
 //    private static String host = "sunrise.cis.unimelb.edu.au";
@@ -126,7 +130,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendPub = publishCommand(cmd);
-                        sendMessage(command,sendPub, cmd);
+                        sendMessage(command, sendPub, cmd);
 
                     }
                     break;
@@ -137,7 +141,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendRem = removeCommand(cmd);
-                        sendMessage(command,sendRem, cmd);
+                        sendMessage(command, sendRem, cmd);
                     }
                     break;
                 case SHARE:
@@ -147,16 +151,16 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendShare = shareCommand(cmd);
-                        sendMessage(command,sendShare, cmd);
+                        sendMessage(command, sendShare, cmd);
                     }
                     break;
                 case QUERY:
                     JSONObject sendQuery = queryCommand(cmd);
-                    sendMessage(command,sendQuery, cmd);
+                    sendMessage(command, sendQuery, cmd);
                     break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
-                    sendMessage(command,sendFetch, cmd);
+                    sendMessage(command, sendFetch, cmd);
                     break;
                 case EXCHANGE:
                     if (!cmd.hasOption("servers")) {
@@ -165,7 +169,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendExchange = exchangeCommand(cmd);
-                        sendMessage(command,sendExchange, cmd);
+                        sendMessage(command, sendExchange, cmd);
                     }
                     break;
                 default:
@@ -290,9 +294,9 @@ public class MyClient {
      * @param sendJson json object to be sent.
      * @param cmd      cmd may specify another server host and port number.
      */
-    private static void sendMessage(String command,JSONObject sendJson, CommandLine cmd) {
+    private static void sendMessage(String command, JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
-        String receiveData;
+        String receiveData = "";
 
         Socket connection;
         try {
@@ -312,15 +316,41 @@ public class MyClient {
                 System.out.println("connection fail");
                 System.exit(1);
             }
-            if (!command.equals(FETCH)){
+            if (!command.equals(FETCH)) {
                 do {
-                    Thread.sleep(1*1000);
+                    Thread.sleep(1 * 1000);
                     String read = in.readUTF();
                     logr.fine("RECEIVED:" + read);
-                    System.out.println("receive from server:" + read); //打印需要format
+                    receiveData += read + "\n";
+//                    System.out.println("receive from server:" + read); //打印需要format
                 } while (in.available() > 0);
             } else {
+                String readline = in.readUTF();
+                JSONArray recv = (JSONArray) JSONSerializer.toJSON(readline);
+                JSONObject responseType = recv.getJSONObject(0);
+                if (responseType.get("response").equals("error")) {
+                    receiveData = "error";
+                    receiveData += "," + responseType.get("errorMessage");
+                } else {
 
+                    JSONObject resource = recv.getJSONObject(1);
+                    int filesize = (int) resource.get("resourceSize");
+                    String fileName = (String) resource.get("name");
+                    String randomName = randomAlphabetic(5);
+                    fileName = fileName.equals("") ? randomName : fileName;
+                    String fileType = uri.substring(uri.indexOf(".") + 1);
+                    FileOutputStream fos = new FileOutputStream(fileName + randomName + "." + fileType);
+                    byte[] buffer = new byte[4096];
+                    int read;
+                    int remaining = filesize;
+                    System.out.println("receiving..");
+                    while ((read = in.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
+                        remaining -= read;
+//                        System.out.println("read " + totalRead + " bytes.");
+                        fos.write(buffer, 0, read);
+                    }
+                    System.out.println("done");
+                }
             }
 
             if (cmd.hasOption("debug")) {
@@ -332,16 +362,27 @@ public class MyClient {
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
                 }
+            } else {
+                //print out
+                JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                JSONObject resp = recv.getJSONObject(0);
+                String respTpye = (String) resp.get("response");
+                if (respTpye.equals("error")) {
+                    System.out.print("error,");
+                    System.out.println(resp.get("errorMessage") + "!");
+                } else {
+                    System.out.println("success!");
+                }
             }
             in.close();
             out.close();
             connection.close();
 
-        } catch (IOException e) {
-            System.out.println("connection fail pls specify a correct host and port");
-            System.exit(1);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("bad things always happen,pls try again.");
+        } catch (IOException e) {
+            System.out.println("connection fail");
+            System.exit(1);
         }
     }
 
@@ -350,12 +391,9 @@ public class MyClient {
         logr.setLevel(Level.ALL);
         try {
             FileHandler fh = new FileHandler("logfile.log");
-            //uncomment below if running in maven before build.
-            //FileHandler fh = new FileHandler("src/main/java/Client/logfile.log");
             fh.setLevel(Level.FINE);
             logr.addHandler(fh);
             MyFormatter formatter = new MyFormatter();
-//            SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
         } catch (java.io.IOException e) {
             logr.finer("File logger not working.");

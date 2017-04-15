@@ -55,7 +55,7 @@ public class Server {
         String receiveData;
         JSONObject cmd;
         JSONObject msg = null;
-        JSONArray fileResponse;
+        JSONArray fileResponse=null;//yiming: add null here
         JSONArray sendMsg = new JSONArray();
 
         try(Socket clientSocket = client) {
