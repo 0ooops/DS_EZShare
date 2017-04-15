@@ -1,5 +1,5 @@
-//package Client;
-package main.java.Client;
+package Client;
+//package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */

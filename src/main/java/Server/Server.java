@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 /**
  * This class is used as server side in client-server model. The server class
  * basically takes responsibility for accepting connection with client, and

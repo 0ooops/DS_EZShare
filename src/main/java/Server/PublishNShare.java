@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 /**
  * public and share funtions
  * created by Jiacheng Chen
@@ -51,16 +51,11 @@ public class PublishNShare {
                     //System.out.println(index);
 
                     /*
-                            index -2: resource has same channel and uri but different user
-                            index -1: put successful
-                            index >0: resource with a same primary key as an existing resource,
-                                      use this index to locate the file in resource list and overwrites it
+                            index -1: resource has same channel and uri but different user
+                            index >0: otherwise
                              */
-                    if (index >= -1) {
-                        if (index >= 0) {
-                            resourceList.remove(index);
-                            resourceList.put(index, res);
-                        }
+                    if (index != -1) {
+                        //resourceList.remove(index);
                         resourceList.put(index, res);
                         response.put("response", "success");
                     } else {
@@ -124,16 +119,10 @@ public class PublishNShare {
                             int index = keys.put(res);
 
                             /*
-                            index -2: resource has same channel and uri but different user
-                            index -1: put successful
-                            index >0: resource with a same primary key as an existing resource,
-                                      use this index to locate the file in resource list and overwrites it
+                            index -1: resource has same channel and uri but different user
+                            index >0: otherwise
                              */
-                            if (index >= -1) {
-                                if (index >= 0) {
-                                    resourceList.remove(index);
-                                    resourceList.put(index, res);
-                                }
+                            if (index != -1) {
                                 resourceList.put(index, res);
                                 response.put("response", "success");
                             } else {
