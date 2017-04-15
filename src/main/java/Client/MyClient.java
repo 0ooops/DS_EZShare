@@ -6,12 +6,9 @@ package Client;
 
 import org.apache.commons.cli.*;
 
-import java.util.Random;
 import java.util.logging.*;
 
 import net.sf.json.*;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
@@ -110,11 +107,11 @@ public class MyClient {
 
         setupLogger();
         logr.info("setting debug on");
-/**
- * 1.judge whether the client gives any command.
- * 2.verify the command.
- * 3.produce corresponding JSON Objects for sending to the server.
- * 4.send message.
+/*
+  1.judge whether the client gives any command.
+  2.verify the command.
+  3.produce corresponding JSON Objects for sending to the server.
+  4.send message.
  */
         if (args == null || args.length == 0) {
             formatter.printHelp("commands", options);
@@ -318,21 +315,22 @@ public class MyClient {
             }
             if (!command.equals(FETCH)) {
                 do {
-                    Thread.sleep(1 * 1000);
+                    Thread.sleep(1000);
                     String read = in.readUTF();
                     logr.fine("RECEIVED:" + read);
                     receiveData += read + "\n";
 //                    System.out.println("receive from server:" + read); //打印需要format
                 } while (in.available() > 0);
             } else {
+                Thread.sleep(1000);
                 String readline = in.readUTF();
+                logr.fine("RECEIVED:" + readline);
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(readline);
                 JSONObject responseType = recv.getJSONObject(0);
                 if (responseType.get("response").equals("error")) {
                     receiveData = "error";
                     receiveData += "," + responseType.get("errorMessage");
                 } else {
-
                     JSONObject resource = recv.getJSONObject(1);
                     int filesize = (int) resource.get("resourceSize");
                     String fileName = (String) resource.get("name");
@@ -352,7 +350,6 @@ public class MyClient {
                     System.out.println("done");
                 }
             }
-
             if (cmd.hasOption("debug")) {
                 //print logfile
                 BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
@@ -372,6 +369,23 @@ public class MyClient {
                     System.out.println(resp.get("errorMessage") + "!");
                 } else {
                     System.out.println("success!");
+                }
+                if (command.equals(QUERY) && !respTpye.equals("error")){
+                    for (int i=1;i<recv.size()-1;i++){
+                        JSONObject queryList = recv.getJSONObject(i);
+                        String qName = (String) queryList.get("name");
+                        String qUri= (String) queryList.get("uri");
+                        JSONArray qTags = (JSONArray)queryList.get("tags");
+                        String qEzserver = (String)queryList.get("ezserver");
+                        String qChannel = (String)queryList.get("channel");
+                        System.out.println("name: "+qName);
+                        System.out.println("tags: "+qTags.toString());
+                        System.out.println("uri: "+qUri);
+                        System.out.println("channel: "+qChannel);
+                        System.out.println("ezserver: "+qEzserver);
+                    }
+                    System.out.println();
+                    System.out.println("hit "+ (recv.size()-2) +" resources");
                 }
             }
             in.close();
