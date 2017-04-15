@@ -1,4 +1,5 @@
 package Client;
+//package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
@@ -19,12 +20,19 @@ public class MyClient {
     /**
      * default server host and port
      */
+
 //    private static int port = 3300;
 //    private static String host = "http://115.146.93.106";
 //    private static int port = 8000;
 //    private static String host = "localhost";
     private static String host = "sunrise.cis.unimelb.edu.au";
     private static int port = 3780;
+
+//    private static int port = 3780;
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 9999;
+//    private static String host = "localhost";
+
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -170,7 +178,7 @@ public class MyClient {
 
     private static JSONObject exchangeCommand(CommandLine cmd) {
         JSONObject exchange = new JSONObject();
-        JSONArray serverlist = new JSONArray();
+        JSONArray serverList = new JSONArray();
         String servers = cmd.getOptionValue("servers");
         String[] sServers = servers.split(",");
         for (String sServer : sServers) {
@@ -178,10 +186,10 @@ public class MyClient {
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
             serv.put("port", tempServer[1]);
-            serverlist.add(serv);
+            serverList.add(serv);
         }
         exchange.put("command", "EXCHANGE");
-        exchange.put("serverlist", serverlist);
+        exchange.put("serverList", serverList);
         logr.fine("exchanging");
         return exchange;
     }
@@ -299,15 +307,15 @@ public class MyClient {
             out.flush();
             logr.fine("SENT:" + sendData);
             try {
-                connection.setSoTimeout(10*1000);
-            }catch (Exception e){
+                connection.setSoTimeout(10 * 1000);
+            } catch (Exception e) {
                 System.out.println("connection fail");
                 System.exit(1);
             }
             do {
                 String read = in.readUTF();
                 logr.fine("RECEIVED:" + read);
-//                System.out.println("receive from server:" + read); //打印需要format
+                System.out.println("receive from server:" + read); //打印需要format
             } while (in.available() > 0);
             if (cmd.hasOption("debug")) {
                 //print logfile
@@ -324,7 +332,8 @@ public class MyClient {
             connection.close();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("connection fail pls specify a correct host and port");
+            System.exit(1);
         }
     }
 

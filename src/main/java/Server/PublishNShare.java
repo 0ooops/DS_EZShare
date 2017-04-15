@@ -1,10 +1,11 @@
 package Server;
-
+//package main.java.Server;
 /**
  * public and share funtions
  * created by Jiacheng Chen
  */
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class PublishNShare {
                 if (uri.equals("") || owner.equals("*")) {
                     response.put("response", "error");
                     response.put("errorMessage", "invalid resource");
-                } else if (!(uri.startsWith("http:\\/\\/") || uri.startsWith("ftp:\\/\\/"))) {
+                } else if (!(uri.startsWith("http://") || uri.startsWith("ftp://"))) {
                     response.put("response", "error");
                     response.put("errorMessage", "cannot publish resource");
                 } else {
@@ -50,16 +51,11 @@ public class PublishNShare {
                     //System.out.println(index);
 
                     /*
-                            index -2: resource has same channel and uri but different user
-                            index -1: put successful
-                            index >0: resource with a same primary key as an existing resource,
-                                      use this index to locate the file in resource list and overwrites it
+                            index -1: resource has same channel and uri but different user
+                            index >0: otherwise
                              */
-                    if (index >= -1) {
-                        if (index >= 0) {
-                            resourceList.remove(index);
-                            resourceList.put(index, res);
-                        }
+                    if (index != -1) {
+                        //resourceList.remove(index);
                         resourceList.put(index, res);
                         response.put("response", "success");
                     } else {
@@ -87,16 +83,16 @@ public class PublishNShare {
      * @param obj
      * json object contain the resource
      */
-    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
                                    String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
 
         //check if json contains a secret
-        if (obj.containsKey("secret")) {
+        if (obj.containsKey("secret") || obj.get("secret").equals("")) {
             //check if the secret is valid
-            if (!((String)obj.get("secret")).equals("")) {
+            if (obj.get("secret").equals(secret)) {
                 //check if there is a resource
                 if (obj.containsKey("resource")) {
                     //get the resources json
@@ -116,23 +112,17 @@ public class PublishNShare {
                             response.put("errorMessage", "invalid resource");
                         } else if (!f.exists()) {
                             response.put("response", "error");
-                            response.put("errorMessage", "cannot share resource");
+                            response.put("errorMessage", "missing resource and/or secret");
                         } else {
                             //create a resource and add to the resource list
                             Resource res = getResource(resJSON, address, port);
                             int index = keys.put(res);
 
                             /*
-                            index -2: resource has same channel and uri but different user
-                            index -1: put successful
-                            index >0: resource with a same primary key as an existing resource,
-                                      use this index to locate the file in resource list and overwrites it
+                            index -1: resource has same channel and uri but different user
+                            index >0: otherwise
                              */
-                            if (index >= -1) {
-                                if (index >= 0) {
-                                    resourceList.remove(index);
-                                    resourceList.put(index, res);
-                                }
+                            if (index != -1) {
                                 resourceList.put(index, res);
                                 response.put("response", "success");
                             } else {
@@ -197,7 +187,10 @@ public class PublishNShare {
 
         ArrayList<String> tags = new ArrayList<String>();
         if (obj.containsKey("tags")) {
-            tags = (ArrayList<String>)obj.get("tags");
+            JSONArray arr = (JSONArray) obj.get("tags");
+            for(int i = 0; i < arr.size(); i++) {
+                tags.add((String) arr.get(i));
+            }
         }
 
         String server = address + ":" + port;

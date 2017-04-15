@@ -1,4 +1,5 @@
 package Server;
+//package main.java.Server;
 import java.util.HashMap;
 
 /**
@@ -29,7 +30,7 @@ public class KeyList {
         if (keys.containsKey(channel)) {
             if (keys.get(channel).containsKey(uri)) {
                 if (!keys.get(channel).get(uri).containsKey(owner)) {
-                    return -2;
+                    return -1;
                 } else {
                     return keys.get(channel).get(uri).get(owner);
                 }
@@ -44,7 +45,7 @@ public class KeyList {
         }
         //System.out.println(index);
         index += 1;
-        return -1;
+        return keys.get(channel).get(uri).get(owner);
     }
 
     /**

@@ -1,21 +1,22 @@
 package Server;
-
+//package main.java.Server;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class QueryNExchange {
+
     //This function is mainly for parsing the "relay" argument and overall control.
     public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList) {
         boolean relay = Boolean.parseBoolean(command.get("relay").toString());
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
+        int querySize;
 
         if(!command.containsKey("resourceTemplate")) {
             response.put("response","error");
@@ -30,11 +31,15 @@ public class QueryNExchange {
             } else {
                 command.put("relay", false);
                 fullQueryList.add(selfQuery(command, resourceList));
-                for(int i = 0; i < serverList.size(); i++) {
+                for(int i = 1; i < serverList.size(); i++) {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
-            size.put("resultSize", fullQueryList.size() - 2);
+            querySize = fullQueryList.size() - 1;
+            if (fullQueryList.getJSONArray(1).size() == 0) {
+                querySize = 0;
+            }
+            size.put("resultSize", querySize);
             fullQueryList.add(size);
             return fullQueryList;
         }
@@ -44,17 +49,14 @@ public class QueryNExchange {
     public static JSONArray selfQuery(JSONObject command, HashMap<Integer, Resource> resourceList) {
         JSONArray queryList = new JSONArray();
         JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
+        JSONArray cmdTagsJson = cmd.getJSONArray("tags");
+        String[] cmdTags = cmdTagsJson.toString().substring(1, cmdTagsJson.toString().length() - 1).split(",");
+        String cmdName = cmd.get("name").toString();
+        String cmdDescription = cmd.get("description").toString();
 
         for(Resource src : resourceList.values()) {
             Boolean channel = true, owner = true, tags = true, uri = true;
             Boolean name = false, description = false, nameDescription = false;
-            JSONArray cmdTagsJson = cmd.getJSONArray("tags");
-            String[] cmdTags = cmdTagsJson.toString().substring(1, cmdTagsJson.toString().length() - 1).split(",");
-            String cmdName = cmd.get("name").toString();
-            String cmdDescription = cmd.get("description").toString();
-
-            System.out.println(cmd.toString());
-            System.out.println(src.toString());
 
             if (!cmd.get("channel").equals("") && !cmd.get("channel").equals(src.getChannel())) {
                 channel = false;
@@ -117,51 +119,16 @@ public class QueryNExchange {
 
             do {
                 receiveData = in.readUTF();
+                Thread.sleep(3000);
             } while (in.available() > 0);
 
             connection.close();
 
         } catch (IOException e){
             e.printStackTrace();
+            receiveData = "connection failed";
         } finally {
             return receiveData;
         }
-    }
-
-    public static JSONArray exchange (JSONObject command, JSONArray serverList, Socket clientSocket) {
-        JSONArray newList = command.getJSONArray("serverlist");
-        JSONArray msgArray = new JSONArray();
-        JSONObject msg = new JSONObject();
-        JSONArray currentList = new JSONArray();
-        JSONObject currentServer = new JSONObject();
-        String receiveData;
-        currentServer.put("hostname", clientSocket.getLocalAddress().getHostAddress());
-        currentServer.put("port", clientSocket.getLocalPort());
-
-        for (int i = 0; i < newList.size(); i++) {
-            if (newList.getJSONObject(i).get("port").toString().equals(currentServer.get("port").toString())) {
-                msg.put("response", "success");
-            } else if (!serverList.contains(newList.get(i))) { // double check whether contains work for this case
-                String host = newList.getJSONObject(i).get("hostname").toString();
-                int port = Integer.parseInt(newList.getJSONObject(i).get("port").toString());
-//                currentServer.put("hostname", clientSocket.getLocalAddress().getHostAddress());
-//                currentServer.put("port", clientSocket.getLocalPort());
-//                currentList.add(currentServer);
-//                command.put("serverlist", currentList);
-                receiveData = serverSend(host, port, command.toString());
-
-                if (receiveData != null) {
-                    serverList.add(newList.getJSONObject(i));
-                    msg.put("response", "success");
-                } else {
-                    msg.put("error", "invalid server or port");
-                }
-            } else {
-                msg.put("response", "the server/port pair has already been known by the current server");
-            }
-            msgArray.add(msg);
-        }
-
-        return msgArray;
     }
 }
