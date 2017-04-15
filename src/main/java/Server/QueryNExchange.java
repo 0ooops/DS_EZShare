@@ -15,8 +15,8 @@ public class QueryNExchange {
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
-        int querySize = 0;
         JSONArray compare = new JSONArray();
+        int querySize;
 
         if(!command.containsKey("resourceTemplate")) {
             response.put("response","error");
@@ -122,46 +122,16 @@ public class QueryNExchange {
 
             do {
                 receiveData = in.readUTF();
+                Thread.sleep(3000);
             } while (in.available() > 0);
 
             connection.close();
 
         } catch (IOException e){
             e.printStackTrace();
+            receiveData = "connection failed";
         } finally {
             return receiveData;
         }
-    }
-
-    public static JSONArray exchange (JSONObject command, JSONArray serverList, Socket clientSocket) {
-        JSONArray newList = command.getJSONArray("serverlist");
-        JSONArray msgArray = new JSONArray();
-        JSONObject msg = new JSONObject();
-        JSONObject currentServer = new JSONObject();
-        String receiveData;
-        currentServer.put("hostname", clientSocket.getLocalAddress().getHostAddress());
-        currentServer.put("port", clientSocket.getLocalPort());
-
-        for (int i = 0; i < newList.size(); i++) {
-            if (newList.getJSONObject(i).get("port").toString().equals(currentServer.get("port").toString())) {
-                msg.put("response", "success");
-            } else if (!serverList.contains(newList.get(i))) {
-                String host = newList.getJSONObject(i).get("hostname").toString();
-                int port = Integer.parseInt(newList.getJSONObject(i).get("port").toString());
-                receiveData = serverSend(host, port, command.toString());
-
-                if (receiveData != null) {
-                    serverList.add(newList.getJSONObject(i));
-                    msg.put("response", "success");
-                } else {
-                    msg.put("error", "invalid server or port");
-                }
-            } else {
-                msg.put("response", "the server/port pair has already been known by the current server");
-            }
-            msgArray.add(msg);
-        }
-
-        return msgArray;
     }
 }

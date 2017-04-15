@@ -22,7 +22,7 @@ public class MyClient {
      */
 //    private static int port = 3780;
 //    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 8000;
+    private static int port = 9999;
     private static String host = "localhost";
 
     private static String channel = "";

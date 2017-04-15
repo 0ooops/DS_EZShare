@@ -2,9 +2,22 @@
 
 issues: 
 1.client   "tags":["[web"]
-2.publish has problem with http://  modified
+2.publish has problem with http:// and error message  modified
 
 -query
 
 issues:
 1.nothing print out from client, should add print
+
+-remove -owner -channel -uri
+
+issues:
+1.the command cannot be read??
+
+
+1. serverlist > serverList
+2. 
+
+
+
+
