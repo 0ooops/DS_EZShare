@@ -16,7 +16,7 @@ public class QueryNExchange {
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
-        int querySize;
+        int querySize = 0;
 
         if(!command.containsKey("resourceTemplate")) {
             response.put("response","error");
@@ -27,17 +27,16 @@ public class QueryNExchange {
             response.put("response", "success");
             fullQueryList.add(response);
             if (!relay) {
-                fullQueryList.add(selfQuery(command, resourceList));
+                fullQueryList.addAll(selfQuery(command, resourceList));
             } else {
                 command.put("relay", false);
-                fullQueryList.add(selfQuery(command, resourceList));
+                fullQueryList.addAll(selfQuery(command, resourceList));
                 for(int i = 1; i < serverList.size(); i++) {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
-            querySize = fullQueryList.size() - 1;
-            if (fullQueryList.getJSONArray(1).size() == 0) {
-                querySize = 0;
+            if (fullQueryList.getJSONObject(1).containsKey("name")) {
+                querySize = fullQueryList.size() - 1;
             }
             size.put("resultSize", querySize);
             fullQueryList.add(size);

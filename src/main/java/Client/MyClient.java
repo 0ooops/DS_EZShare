@@ -20,10 +20,18 @@ public class MyClient {
     /**
      * default server host and port
      */
+
+//    private static int port = 3300;
+//    private static String host = "http://115.146.93.106";
+//    private static int port = 8000;
+//    private static String host = "localhost";
+    private static String host = "sunrise.cis.unimelb.edu.au";
+    private static int port = 3780;
+
 //    private static int port = 3780;
 //    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 9999;
-    private static String host = "localhost";
+//    private static int port = 9999;
+//    private static String host = "localhost";
 
     private static String channel = "";
     private static String description = "";
@@ -118,7 +126,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendPub = publishCommand(cmd);
-                        sendMessage(sendPub, cmd);
+                        sendMessage(command,sendPub, cmd);
 
                     }
                     break;
@@ -129,7 +137,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendRem = removeCommand(cmd);
-                        sendMessage(sendRem, cmd);
+                        sendMessage(command,sendRem, cmd);
                     }
                     break;
                 case SHARE:
@@ -139,16 +147,16 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendShare = shareCommand(cmd);
-                        sendMessage(sendShare, cmd);
+                        sendMessage(command,sendShare, cmd);
                     }
                     break;
                 case QUERY:
                     JSONObject sendQuery = queryCommand(cmd);
-                    sendMessage(sendQuery, cmd);
+                    sendMessage(command,sendQuery, cmd);
                     break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
-                    sendMessage(sendFetch, cmd);
+                    sendMessage(command,sendFetch, cmd);
                     break;
                 case EXCHANGE:
                     if (!cmd.hasOption("servers")) {
@@ -157,7 +165,7 @@ public class MyClient {
                         return;
                     } else {
                         JSONObject sendExchange = exchangeCommand(cmd);
-                        sendMessage(sendExchange, cmd);
+                        sendMessage(command,sendExchange, cmd);
                     }
                     break;
                 default:
@@ -170,7 +178,7 @@ public class MyClient {
 
     private static JSONObject exchangeCommand(CommandLine cmd) {
         JSONObject exchange = new JSONObject();
-        JSONArray serverlist = new JSONArray();
+        JSONArray serverList = new JSONArray();
         String servers = cmd.getOptionValue("servers");
         String[] sServers = servers.split(",");
         for (String sServer : sServers) {
@@ -178,10 +186,10 @@ public class MyClient {
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
             serv.put("port", tempServer[1]);
-            serverlist.add(serv);
+            serverList.add(serv);
         }
         exchange.put("command", "EXCHANGE");
-        exchange.put("serverlist", serverlist);
+        exchange.put("serverList", serverList);
         logr.fine("exchanging");
         return exchange;
     }
@@ -282,7 +290,7 @@ public class MyClient {
      * @param sendJson json object to be sent.
      * @param cmd      cmd may specify another server host and port number.
      */
-    private static void sendMessage(JSONObject sendJson, CommandLine cmd) {
+    private static void sendMessage(String command,JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData;
 
@@ -298,11 +306,23 @@ public class MyClient {
 //            System.out.println("Sending data: " + sendData);
             out.flush();
             logr.fine("SENT:" + sendData);
-            do {
-                String read = in.readUTF();
-                logr.fine("RECEIVED:" + read);
-                System.out.println("receive from server:" + read); //打印需要format
-            } while (in.available() > 0);
+            try {
+                connection.setSoTimeout(10 * 1000);
+            } catch (Exception e) {
+                System.out.println("connection fail");
+                System.exit(1);
+            }
+            if (!command.equals(FETCH)){
+                do {
+                    Thread.sleep(1*1000);
+                    String read = in.readUTF();
+                    logr.fine("RECEIVED:" + read);
+                    System.out.println("receive from server:" + read); //打印需要format
+                } while (in.available() > 0);
+            } else {
+
+            }
+
             if (cmd.hasOption("debug")) {
                 //print logfile
                 BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
@@ -318,6 +338,9 @@ public class MyClient {
             connection.close();
 
         } catch (IOException e) {
+            System.out.println("connection fail pls specify a correct host and port");
+            System.exit(1);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
