@@ -102,6 +102,33 @@ public class QueryNExchange {
         return queryList;
     }
 
+    // This function is used for exchange command.
+    public static JSONArray exchange (JSONObject command, JSONArray serverList) {
+        JSONArray newList;
+        JSONArray msgArray = new JSONArray();
+        JSONObject msg = new JSONObject();
+
+        if (command.containsKey("serverList")) {
+            if (command.getJSONArray("serverList").size() != 0) {
+                newList = command.getJSONArray("serverList");
+                for (int i = 0; i < newList.size(); i++) {
+                    if (!serverList.contains(newList.getJSONObject(i))) {
+                        serverList.add(newList.getJSONObject(i));
+                    }
+                }
+                msg.put("response", "success");
+            } else {
+                msg.put("response", "error");
+                msg.put("errorMessage", "missing or invalid serverList");
+            }
+        } else {
+            msg.put("response", "error");
+            msg.put("errorMessage", "missing serverList");
+        }
+        msgArray.add(msg);
+        return msgArray;
+    }
+
     // This function is for one server to send data to another server.
     public static String serverSend(String server, int port, String data) {
         String receiveData = "";
