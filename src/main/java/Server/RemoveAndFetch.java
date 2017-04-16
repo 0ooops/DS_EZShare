@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -23,13 +23,18 @@ public class RemoveAndFetch {
 			String cmdOwner = command.getJSONObject("resource").getString("owner");
 			String cmdChannel = command.getJSONObject("resource").getString("channel");
 			for (Resource src : resourceList.values()) {
+				src.getChannel().equals(cmdChannel);
+				src.getOwner();
+				src.getUri();
 				if (cmdChannel.equals(src.getChannel()) && cmdOwner.equals(src.getOwner()) && cmdUri.equals(src.getUri())) {
 					while (resourceList.values().remove(src)) ;
 					keys.remove(cmdChannel, cmdUri, cmdOwner);
 					response.put("response", "success");
-					break;
+					return response;
 				}
 			}
+			response.put("response", "error");
+			response.put("errorMessage", "invalid resource");
 		}
 		return response;
 	}

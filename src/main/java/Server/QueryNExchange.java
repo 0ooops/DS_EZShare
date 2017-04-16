@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.DataInputStream;
@@ -16,7 +16,6 @@ public class QueryNExchange {
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
-        int querySize = 0;
 
         if(!command.containsKey("resourceTemplate")) {
             response.put("response","error");
@@ -35,10 +34,7 @@ public class QueryNExchange {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
             }
-//            if (fullQueryList.size() >= 1 && fullQueryList.getJSONObject(1).containsKey("name")) {
-//                querySize = fullQueryList.size() - 1;
-//            }
-            size.put("resultSize", querySize);
+            size.put("resultSize", fullQueryList.size() - 1);
             fullQueryList.add(size);
             return fullQueryList;
         }
@@ -53,7 +49,8 @@ public class QueryNExchange {
         String cmdName = cmd.get("name").toString();
         String cmdDescription = cmd.get("description").toString();
 
-        for(Resource src : resourceList.values()) {
+        for(Resource resource : resourceList.values()) {
+            Resource src = new Resource(resource);
             Boolean channel = true, owner = true, tags = true, uri = true;
             Boolean name = false, description = false, nameDescription = false;
 

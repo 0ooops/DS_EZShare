@@ -1,18 +1,14 @@
-package Client;
-//package main.java.Client;
+//package Client;
+package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
 
 import org.apache.commons.cli.*;
-
 import java.util.logging.*;
-
 import net.sf.json.*;
-
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 public class MyClient {
@@ -319,7 +315,7 @@ public class MyClient {
                     String read = in.readUTF();
                     logr.fine("RECEIVED:" + read);
                     receiveData += read + "\n";
-//                    System.out.println("receive from server:" + read); //打印需要format
+                    System.out.println("receive from server:" + read); //打印需要format
                 } while (in.available() > 0);
             } else {
                 Thread.sleep(1000);
@@ -331,7 +327,7 @@ public class MyClient {
                     receiveData = readline;
                 } else {
                     JSONObject resource = recv.getJSONObject(1);
-                    int filesize = (int) resource.get("resourceSize");
+                    int fileSize = (int) resource.get("resourceSize");
                     String fileName = (String) resource.get("name");
                     String randomName = randomAlphabetic(5);
                     fileName = fileName.equals("") ? randomName : fileName;
@@ -339,7 +335,7 @@ public class MyClient {
                     FileOutputStream fos = new FileOutputStream(fileName + randomName + "." + fileType);
                     byte[] buffer = new byte[4096];
                     int read;
-                    int remaining = filesize;
+                    int remaining = fileSize;
                     System.out.println("receiving...");
                     while ((read = in.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
                         remaining -= read;
@@ -361,32 +357,32 @@ public class MyClient {
                 }
             } else {
                 //print out
-                JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-                JSONObject resp = recv.getJSONObject(0);
-                String respTpye = (String) resp.get("response");
-                if (respTpye.equals("error")) {
-                    System.out.print("error,");
-                    System.out.println(resp.get("errorMessage") + "!");
-                } else {
-                    System.out.println("success!");
-                }
-                if (command.equals(QUERY) && !respTpye.equals("error")) {
-                    for (int i = 1; i < recv.size() - 1; i++) {
-                        JSONObject queryList = recv.getJSONObject(i);
-                        String qName = (String) queryList.get("name");
-                        String qUri = (String) queryList.get("uri");
-                        JSONArray qTags = (JSONArray) queryList.get("tags");
-                        String qEzserver = (String) queryList.get("ezserver");
-                        String qChannel = (String) queryList.get("channel");
-                        System.out.println("name: " + qName);
-                        System.out.println("tags: " + qTags.toString());
-                        System.out.println("uri: " + qUri);
-                        System.out.println("channel: " + qChannel);
-                        System.out.println("ezserver: " + qEzserver);
-                    }
-                    System.out.println();
-                    System.out.println("hit " + (recv.size() - 2) + " resources");
-                }
+//                JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+//                JSONObject resp = recv.getJSONObject(0);
+//                String respTpye = (String) resp.get("response");
+//                if (respTpye.equals("error")) {
+//                    System.out.print("error,");
+//                    System.out.println(resp.get("errorMessage") + "!");
+//                } else {
+//                    System.out.println("success!");
+//                }
+//                if (command.equals(QUERY) && !respTpye.equals("error")) {
+//                    for (int i = 1; i < recv.size() - 1; i++) {
+//                        JSONObject queryList = recv.getJSONObject(i);
+//                        String qName = (String) queryList.get("name");
+//                        String qUri = (String) queryList.get("uri");
+//                        JSONArray qTags = (JSONArray) queryList.get("tags");
+//                        String qEzserver = (String) queryList.get("ezserver");
+//                        String qChannel = (String) queryList.get("channel");
+//                        System.out.println("name: " + qName);
+//                        System.out.println("tags: " + qTags.toString());
+//                        System.out.println("uri: " + qUri);
+//                        System.out.println("channel: " + qChannel);
+//                        System.out.println("ezserver: " + qEzserver);
+//                    }
+//                    System.out.println();
+//                    System.out.println("hit " + (recv.size() - 2) + " resources");
+//                }
             }
             in.close();
             out.close();

@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 /**
  * The class Resource is an entity used for storing resources records.
  * The constructor of the class requires the value of uri, because uri
@@ -33,6 +33,16 @@ public class Resource {
         this.channel = channel;
         this.owner = owner;
         this.ezServer = ezserver;
+    }
+
+    public Resource(Resource src) {
+        this.uri = src.getUri();
+        this.name = src.getName();
+        this.description = src.getDescription();
+        this.tags = src.getTags();
+        this.channel = src.getChannel();
+        this.owner = src.getOwner();
+        this.ezServer = src.getEzServer();
     }
 
     //Getters and Setters

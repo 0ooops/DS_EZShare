@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 /**
  * This class is used as server side in client-server model. The server class
  * basically takes responsibility for accepting connection with client, and
@@ -104,6 +104,9 @@ public class Server {
                         sendMsg.add(msg);
                         break;
                 }
+                for (Resource src: resourceList.values()) {
+                    System.out.println(src);
+                }
                 System.out.println("Sending data to client: " + sendMsg.toString());
                 out.writeUTF(sendMsg.toString());
                 Thread.sleep(3000);
@@ -114,11 +117,11 @@ public class Server {
                         out.write(buffer);
                     }
                     out.flush();
+//                    file.close();
                 }
             } while(in.available() > 0);
 
             out.close();
-            file.close();
             clientSocket.close();
             System.out.println("The connection with " + clientSocket.toString() + " has been closed.");
 
