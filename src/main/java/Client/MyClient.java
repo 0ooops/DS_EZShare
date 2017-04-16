@@ -328,8 +328,7 @@ public class MyClient {
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(readline);
                 JSONObject responseType = recv.getJSONObject(0);
                 if (responseType.get("response").equals("error")) {
-                    receiveData = "error";
-                    receiveData += "," + responseType.get("errorMessage");
+                    receiveData = readline;
                 } else {
                     JSONObject resource = recv.getJSONObject(1);
                     int filesize = (int) resource.get("resourceSize");
@@ -360,7 +359,7 @@ public class MyClient {
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
                 }
-            } else if (!command.equals(FETCH)){
+            } else {
                 //print out
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
                 JSONObject resp = recv.getJSONObject(0);
@@ -371,22 +370,22 @@ public class MyClient {
                 } else {
                     System.out.println("success!");
                 }
-                if (command.equals(QUERY) && !respTpye.equals("error")){
-                    for (int i=1;i<recv.size()-1;i++){
+                if (command.equals(QUERY) && !respTpye.equals("error")) {
+                    for (int i = 1; i < recv.size() - 1; i++) {
                         JSONObject queryList = recv.getJSONObject(i);
                         String qName = (String) queryList.get("name");
-                        String qUri= (String) queryList.get("uri");
-                        JSONArray qTags = (JSONArray)queryList.get("tags");
-                        String qEzserver = (String)queryList.get("ezserver");
-                        String qChannel = (String)queryList.get("channel");
-                        System.out.println("name: "+qName);
-                        System.out.println("tags: "+qTags.toString());
-                        System.out.println("uri: "+qUri);
-                        System.out.println("channel: "+qChannel);
-                        System.out.println("ezserver: "+qEzserver);
+                        String qUri = (String) queryList.get("uri");
+                        JSONArray qTags = (JSONArray) queryList.get("tags");
+                        String qEzserver = (String) queryList.get("ezserver");
+                        String qChannel = (String) queryList.get("channel");
+                        System.out.println("name: " + qName);
+                        System.out.println("tags: " + qTags.toString());
+                        System.out.println("uri: " + qUri);
+                        System.out.println("channel: " + qChannel);
+                        System.out.println("ezserver: " + qEzserver);
                     }
                     System.out.println();
-                    System.out.println("hit "+ (recv.size()-2) +" resources");
+                    System.out.println("hit " + (recv.size() - 2) + " resources");
                 }
             }
             in.close();
