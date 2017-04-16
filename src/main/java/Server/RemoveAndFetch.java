@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
