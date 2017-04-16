@@ -10,3 +10,5 @@ DS_EZShare.iml
 # Log
 logfile.log
 logfile.log.*
+debug.log
+debug.log.*
