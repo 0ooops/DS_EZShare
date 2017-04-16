@@ -1,5 +1,5 @@
-//package Client;
-package main.java.Client;
+package Client;
+//package main.java.Client;
 /**
  * Created by jiangyiming on 4/8/17.
  */
@@ -290,6 +290,7 @@ public class MyClient {
     private static void sendMessage(String command, JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData = "";
+        boolean fetchSuccess= false;
 
         Socket connection;
         try {
@@ -315,7 +316,7 @@ public class MyClient {
                     String read = in.readUTF();
                     logr.fine("RECEIVED:" + read);
                     receiveData += read + "\n";
-                    System.out.println("receive from server:" + read); //打印需要format
+                    //System.out.println("receive from server:" + read); //打印需要format
                 } while (in.available() > 0);
             } else {
                 Thread.sleep(1000);
@@ -343,6 +344,7 @@ public class MyClient {
                         fos.write(buffer, 0, read);
                     }
                     System.out.println("done");
+                    fetchSuccess=true;
                 }
 
             }
@@ -355,34 +357,34 @@ public class MyClient {
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
                 }
-            } else {
+            } else if (!fetchSuccess){
                 //print out
-//                JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-//                JSONObject resp = recv.getJSONObject(0);
-//                String respTpye = (String) resp.get("response");
-//                if (respTpye.equals("error")) {
-//                    System.out.print("error,");
-//                    System.out.println(resp.get("errorMessage") + "!");
-//                } else {
-//                    System.out.println("success!");
-//                }
-//                if (command.equals(QUERY) && !respTpye.equals("error")) {
-//                    for (int i = 1; i < recv.size() - 1; i++) {
-//                        JSONObject queryList = recv.getJSONObject(i);
-//                        String qName = (String) queryList.get("name");
-//                        String qUri = (String) queryList.get("uri");
-//                        JSONArray qTags = (JSONArray) queryList.get("tags");
-//                        String qEzserver = (String) queryList.get("ezserver");
-//                        String qChannel = (String) queryList.get("channel");
-//                        System.out.println("name: " + qName);
-//                        System.out.println("tags: " + qTags.toString());
-//                        System.out.println("uri: " + qUri);
-//                        System.out.println("channel: " + qChannel);
-//                        System.out.println("ezserver: " + qEzserver);
-//                    }
-//                    System.out.println();
-//                    System.out.println("hit " + (recv.size() - 2) + " resources");
-//                }
+                JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                JSONObject resp = recv.getJSONObject(0);
+                String respTpye = (String) resp.get("response");
+                if (respTpye.equals("error")) {
+                    System.out.print("error,");
+                    System.out.println(resp.get("errorMessage") + "!");
+                } else {
+                    System.out.println("success!");
+                }
+                if (command.equals(QUERY) && !respTpye.equals("error")) {
+                    for (int i = 1; i < recv.size() - 1; i++) {
+                        JSONObject queryList = recv.getJSONObject(i);
+                        String qName = (String) queryList.get("name");
+                        String qUri = (String) queryList.get("uri");
+                        JSONArray qTags = (JSONArray) queryList.get("tags");
+                        String qEzserver = (String) queryList.get("ezserver");
+                        String qChannel = (String) queryList.get("channel");
+                        System.out.println("name: " + qName);
+                        System.out.println("tags: " + qTags.toString());
+                        System.out.println("uri: " + qUri);
+                        System.out.println("channel: " + qChannel);
+                        System.out.println("ezserver: " + qEzserver);
+                    }
+                    System.out.println();
+                    System.out.println("hit " + (recv.size() - 2) + " resources");
+                }
             }
             in.close();
             out.close();
