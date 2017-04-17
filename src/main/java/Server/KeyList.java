@@ -1,11 +1,14 @@
 package Server;
 //package main.java.Server;
-import java.util.HashMap;
 
 /**
  * A class that represent the list of primary keys
  * created by Jiacheng Chen
  */
+
+import java.util.HashMap;
+
+
 public class KeyList {
     private HashMap<String, HashMap<String, HashMap<String, Integer>>> keys;
     private Integer index;
@@ -43,7 +46,6 @@ public class KeyList {
             keys.get(channel).put(uri, new HashMap<String, Integer>());
             keys.get(channel).get(uri).put(owner, index);
         }
-        //System.out.println(index);
         index += 1;
         return keys.get(channel).get(uri).get(owner);
     }

@@ -23,7 +23,7 @@ public class Resource {
     private String owner;
     private String ezServer;
 
-    //Constructor: A URI is a compulsory element for resource.
+    //Constructor: all attributes required, used by publish and share functions.
     public Resource(String uri, String channel, String owner, String name,
                     String description, ArrayList<String> tags, String ezserver) {
         this.uri = uri;
@@ -35,6 +35,7 @@ public class Resource {
         this.ezServer = ezserver;
     }
 
+    //Constructor: copy resource, used by query function.
     public Resource(Resource src) {
         this.uri = src.getUri();
         this.name = src.getName();

@@ -1,6 +1,10 @@
 package Client;
 //package main.java.Client;
+
 /**
+ * This class is used as the client side of EZShare System. The client can take legitimate user command as input,
+ * send data to server, and print the message received from server. You can review the process of communications
+ * if you set the command line arguments '-debug' on.
  * Created by jiangyiming on 4/8/17.
  */
 
@@ -13,30 +17,19 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 public class MyClient {
     private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-
     /**
      * default server host and port
      */
-
-//    private static int port = 3300;
-//    private static String host = "http://115.146.93.106";
     private static int port = 8080;
     private static String host = "localhost";
 //    private static String host = "sunrise.cis.unimelb.edu.au";
 //    private static int port = 3780;
-
-//    private static int port = 3780;
-//    private static String host = "sunrise.cis.unimelb.edu.au";
-//    private static int port = 9999;
-//    private static String host = "localhost";
-
     private static String channel = "";
     private static String description = "";
     private static String name = "";
     private static String owner = "";
     private static String tags = "";
     private static String uri = "";
-
     private static String ezserver = null;
     /**
      * all valid commands.
@@ -71,7 +64,6 @@ public class MyClient {
         options.addOption("tags", true, "resource tags, tag1,tag2,tag3,...");
         options.addOption("uri", true, "resource URI");
 
-
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
         HelpFormatter formatter = new HelpFormatter();
@@ -103,12 +95,12 @@ public class MyClient {
 
         setupLogger();
         logr.info("setting debug on");
-/*
-  1.judge whether the client gives any command.
-  2.verify the command.
-  3.produce corresponding JSON Objects for sending to the server.
-  4.send message.
- */
+        /*
+          1.judge whether the client gives any command.
+          2.verify the command.
+          3.produce corresponding JSON Objects for sending to the server.
+          4.send message.
+         */
         if (args == null || args.length == 0) {
             formatter.printHelp("commands", options);
             System.out.println("Please choose commands from above");
@@ -283,7 +275,6 @@ public class MyClient {
 
     /**
      * connection and transmission.
-     *
      * @param sendJson json object to be sent.
      * @param cmd      cmd may specify another server host and port number.
      */
@@ -297,11 +288,7 @@ public class MyClient {
             connection = new Socket(host, port);
             DataInputStream in = new DataInputStream(connection.getInputStream());
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-
-//            System.out.println("send to server:" + sendData);
-
             out.writeUTF(sendData);
-//            System.out.println("Sending data: " + sendData);
             out.flush();
             logr.fine("SENT:" + sendData);
             try {
@@ -340,7 +327,6 @@ public class MyClient {
                     System.out.println("receiving...");
                     while ((read = in.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
                         remaining -= read;
-//                        System.out.println("read " + totalRead + " bytes.");
                         fos.write(buffer, 0, read);
                     }
                     System.out.println("done");
@@ -389,7 +375,6 @@ public class MyClient {
             in.close();
             out.close();
             connection.close();
-
         } catch (InterruptedException e) {
             System.out.println("bad things always happen,pls try again.");
         } catch (IOException e) {

@@ -1,5 +1,12 @@
 package Server;
 //package main.java.Server;
+
+/**
+ * This class is used for querying and exchanging functions on EZShare System.
+ * @author: Jiayu Wang
+ * @date: April 1, 2017
+ */
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.DataInputStream;
@@ -9,8 +16,13 @@ import java.net.Socket;
 import java.util.HashMap;
 
 public class QueryNExchange {
-
-    //This function is mainly for parsing the "relay" argument and overall control.
+    /**
+     * This function is mainly for parsing the "relay" argument and overall control.
+     * @param command client command
+     * @param resourceList central resource list
+     * @param serverList central server list
+     * @return will return a JSONArray fullQueryList
+     */
     public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList) {
         boolean relay = Boolean.parseBoolean(command.get("relay").toString());
         JSONObject response = new JSONObject();
@@ -40,7 +52,12 @@ public class QueryNExchange {
         }
     }
 
-    //This function is used for query the resource on this server.
+    /**
+     * This function is used for query the resource on current server.
+     * @param command
+     * @param resourceList
+     * @return JSONArray
+     */
     public static JSONArray selfQuery(JSONObject command, HashMap<Integer, Resource> resourceList) {
         JSONArray queryList = new JSONArray();
         JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
@@ -89,7 +106,13 @@ public class QueryNExchange {
         return queryList;
     }
 
-    // This function is for one server to query the resource on another server.
+    /**
+     * This function is for one server to query the resource on another server, which is accomplished by forwarding the
+     * query command to another server.
+     * @param serverPort this is the host and port pair for the other server that we are going to query
+     * @param command
+     * @return JSONArray
+     */
     public static JSONArray otherQuery(JSONObject serverPort, JSONObject command) {
         String server = serverPort.get("hostname").toString();
         int port = Integer.parseInt(serverPort.get("port").toString());
@@ -102,7 +125,12 @@ public class QueryNExchange {
         return queryList;
     }
 
-    // This function is used for exchange command.
+    /**
+     * This function is used for exchange command.
+     * @param command
+     * @param serverList
+     * @return JSONArray
+     */
     public static JSONArray exchange (JSONObject command, JSONArray serverList) {
         JSONArray newList;
         JSONArray msgArray = new JSONArray();
@@ -129,7 +157,13 @@ public class QueryNExchange {
         return msgArray;
     }
 
-    // This function is for one server to send data to another server.
+    /**
+     * This function is used for sending and receiving data.
+     * @param server this represents for the target host you would like to connect with.
+     * @param port
+     * @param data the data to be sent to other server.
+     * @return String, the data received from other server.
+     */
     public static String serverSend(String server, int port, String data) {
         String receiveData = "";
         try {

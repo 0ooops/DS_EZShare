@@ -1,5 +1,6 @@
 package Server;
 //package main.java.Server;
+
 /**
  * public and share funtions
  * created by Jiacheng Chen
@@ -16,7 +17,6 @@ public class PublishNShare {
 
     /**
      * publish resource in the server
-     *
      * @param obj
      * json object contain the resource
      */
@@ -48,12 +48,10 @@ public class PublishNShare {
                     //create a resource and add to the resource list
                     Resource res = getResource(resJSON, address, port);
                     int index = keys.put(res);
-                    //System.out.println(index);
-
                     /*
-                            index -1: resource has same channel and uri but different user
-                            index >0: otherwise
-                             */
+                        index -1: resource has same channel and uri but different user
+                        index >0: otherwise
+                    */
                     if (index != -1) {
                         //resourceList.remove(index);
                         resourceList.put(index, res);
@@ -71,7 +69,6 @@ public class PublishNShare {
             response.put("response", "error");
             response.put("errorMessage", "missing resource");
         }
-
         //respond to command
         System.out.println(response);
         return response;
@@ -147,13 +144,11 @@ public class PublishNShare {
             response.put("errorMessage", "missing resource and\\/or secret");
         }
 
-
         //respond to command
         System.out.println(response);
         //r.add(response);
         return response;
     }
-
 
     /**
      * parse json object into a resource object

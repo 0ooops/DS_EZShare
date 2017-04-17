@@ -1,13 +1,15 @@
 package Server;
 //package main.java.Server;
+
 /**
- * This class is used as server side in client-server model. The server class
+ * This class is used as server side in EZShare System. The server class
  * basically takes responsibility for accepting connection with client, and
  * creates new thread for each client. You can specify a few arguments while
  * running the server, or you may use the default settings.
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
+
 import main.java.Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -17,6 +19,7 @@ import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -28,12 +31,18 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 public class Server {
     private final static Logger logr_info = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private final static Logger logr_debug = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    /**
+     * Central storage for resource, client, server, and primary keys, shared by all functions.
+     * Only exist while the server is alive.
+     */
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
     private static JSONArray serverList = new JSONArray();
     private static KeyList keys = new KeyList();
+    /**
+     * Default settings without command line arguments.
+     */
     private static String hostname = "Dr. Stranger";
-    private static String hostIP = "127.0.0.1";
     private static int connectionSecond = 1;
     private static int exchangeSecond = 600;
     private static int port = 8080;
@@ -41,6 +50,7 @@ public class Server {
 
     public static void main(String[] args) {
         try{
+            boolean active = true;
             setupLogger();
             logr_info.info("Starting the EZShare Server");
             Options options = new Options();
@@ -50,7 +60,8 @@ public class Server {
             options.addOption("exchangeinterval", true, "exchange interval in seconds");
             options.addOption("port", true, "server port, an integer");
             options.addOption("secret", true, "secret, random string");
-            //Parsing command line input
+
+            // Parsing command line arguments
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd;
             HelpFormatter formatter = new HelpFormatter();
@@ -93,46 +104,53 @@ public class Server {
             } else {
                 secret = randomAlphabetic(26);
             }
+            if (cmd.hasOption("debug")) {
+                setupDebug();
+                logr_debug.info("Setting debug on");
+            }
+
+            // Print logfile info when starting
             logr_info.info("Using secret: " + secret);
             logr_info.info("Using advertised hostname: " + hostname);
             logr_info.info("Bound to port " + port);
             logr_info.info("Started");
-            //print logfile info when starting
             BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
             String sCurrentLine;
             while ((sCurrentLine = br.readLine()) != null) {
                 System.out.println(sCurrentLine);
             }
 
-            if (cmd.hasOption("debug")) {
-                setupDebug();
-                logr_debug.info("Setting debug on");
-
-            }
-
-            boolean active = true;
+            // Add current host and port to serverList.
             JSONObject localHost = new JSONObject();
-            localHost.put("hostname", hostIP);
-            localHost.put("port", port);
-            serverList.add(localHost);
+            Enumeration<NetworkInterface> hostIP = NetworkInterface.getNetworkInterfaces();
+            while (hostIP.hasMoreElements()) {
+                localHost.put("hostname", hostIP.nextElement());
+                localHost.put("port", port);
+                serverList.add(localHost);
+            }
 
             ServerSocketFactory factory = ServerSocketFactory.getDefault();
             ServerSocket server = factory.createServerSocket(port);
-
+            // Create thread for periodical exchange.
             Thread tExchange = new Thread(() -> timingExchange(cmd));
             tExchange.start();
-
+            // Create thread for each client.
             while(active) {
                 Socket client = server.accept();
                 Thread t = new Thread(() -> serveClient(client, cmd));
                 t.start();
             }
-
         } catch (IOException e){
             e.printStackTrace();
         }
     }
 
+    /**
+     * This function is used for receiving data from client, calling functions according to client's command,
+     * and sending response back to client.
+     * @param client this is the socket connection with client.
+     * @param args this is the parsed command from command line input when running server.
+     */
     private static void serveClient(Socket client, CommandLine args) {
         String receiveData;
         JSONObject cmd;
@@ -142,7 +160,7 @@ public class Server {
         Date date = new Date();
 
         try(Socket clientSocket = client) {
-            // Check Connection Interval Limit
+            // Check connection interval limit, if less than lower requirement, close the connection with processing.
             String getAddress = clientSocket.getInetAddress().getHostAddress();
             logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been established.");
             Long time = date.getTime();
@@ -157,6 +175,7 @@ public class Server {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             FileInputStream file = null;
+            // Call different functions based on client's command.
             do {
                 receiveData = in.readUTF();
                 logr_debug.fine("RECEIVED: " + receiveData);
@@ -168,7 +187,7 @@ public class Server {
                                 clientSocket.getLocalPort()));
                         break;
                     case "REMOVE":
-                    	sendMsg.add(RemoveAndFetch.remove(cmd, resourceList, keys));
+                    	sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
                         break;
                     case "SHARE":
                         sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
@@ -176,7 +195,7 @@ public class Server {
                                 clientSocket.getLocalPort()));
                         break;
                     case "FETCH":
-                        fileResponse = RemoveAndFetch.fetch(cmd, resourceList);
+                        fileResponse = RemoveNFetch.fetch(cmd, resourceList);
                         sendMsg.addAll(fileResponse);
                         if (fileResponse.getJSONObject(0).get("response").equals("success")) {
                             String uri = cmd.getJSONObject("resourceTemplate").get("uri").toString();
@@ -199,7 +218,7 @@ public class Server {
                 out.writeUTF(sendMsg.toString());
                 Thread.sleep(3000);
                 out.flush();
-                // Sending fetched file to client
+                // Sending fetched file to client.
                 if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
                     byte[] buffer = new byte[4000];
                     while (file.read(buffer) > 0) {
@@ -259,7 +278,10 @@ public class Server {
         }
     }
 
-
+    /**
+     * This function is used for periodically exchanging serverList with a random selected server on serverList.
+     * @param args this is the parsed command from command line input when running server.
+     */
     public static void timingExchange (CommandLine args) {
         String receiveData;
         try {
