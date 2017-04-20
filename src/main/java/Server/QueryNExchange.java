@@ -122,7 +122,13 @@ public class QueryNExchange {
         String receiveData = serverSend(server, port, sendData);
         queryList = JSONArray.fromObject(receiveData);
 
-        return queryList;
+        if (queryList.size() >= 3){
+            queryList.remove(0);
+            queryList.remove(1);
+            return queryList;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -176,7 +182,7 @@ public class QueryNExchange {
 
             do {
                 receiveData = in.readUTF();
-                Thread.sleep(3000);
+                Thread.sleep(1000);
             } while (in.available() > 0);
 
             connection.close();

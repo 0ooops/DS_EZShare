@@ -12,3 +12,4 @@ logfile.log
 logfile.log.*
 debug.log
 debug.log.*
+serverLog.*

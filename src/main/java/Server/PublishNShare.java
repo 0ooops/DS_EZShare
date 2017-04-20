@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 
 /**
  * public and share funtions
@@ -70,7 +70,6 @@ public class PublishNShare {
             response.put("errorMessage", "missing resource");
         }
         //respond to command
-        System.out.println(response);
         return response;
     }
 
@@ -94,7 +93,6 @@ public class PublishNShare {
                 if (obj.containsKey("resource")) {
                     //get the resources json
                     JSONObject resJSON = (JSONObject) obj.get("resource");
-                    System.out.println(resJSON);
                     if (resJSON.containsKey("uri")) {
                         String uri = (String) resJSON.get("uri");
                         File f = new File(uri);
@@ -144,9 +142,6 @@ public class PublishNShare {
             response.put("errorMessage", "missing resource and\\/or secret");
         }
 
-        //respond to command
-        System.out.println(response);
-        //r.add(response);
         return response;
     }
 

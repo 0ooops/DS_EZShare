@@ -114,7 +114,7 @@ public class Server {
             logr_info.info("Using advertised hostname: " + hostname);
             logr_info.info("Bound to port " + port);
             logr_info.info("Started");
-            BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
+            BufferedReader br = new BufferedReader(new FileReader("./serverLog.log"));
             String sCurrentLine;
             while ((sCurrentLine = br.readLine()) != null) {
                 System.out.println(sCurrentLine);
@@ -122,12 +122,9 @@ public class Server {
 
             // Add current host and port to serverList.
             JSONObject localHost = new JSONObject();
-            Enumeration<NetworkInterface> hostIP = NetworkInterface.getNetworkInterfaces();
-            while (hostIP.hasMoreElements()) {
-                localHost.put("hostname", hostIP.nextElement());
-                localHost.put("port", port);
-                serverList.add(localHost);
-            }
+            localHost.put("hostname", getRealIp());
+            localHost.put("port", port);
+            serverList.add(localHost);
 
             ServerSocketFactory factory = ServerSocketFactory.getDefault();
             ServerSocket server = factory.createServerSocket(port);
@@ -216,7 +213,7 @@ public class Server {
                 }
                 logr_debug.fine("SENT: " + sendMsg.toString());
                 out.writeUTF(sendMsg.toString());
-                Thread.sleep(3000);
+                Thread.sleep(1000);
                 out.flush();
                 // Sending fetched file to client.
                 if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
@@ -254,7 +251,7 @@ public class Server {
         LogManager.getLogManager().reset();
         logr_info.setLevel(Level.ALL);
         try {
-            FileHandler fh = new FileHandler("logfile.log");
+            FileHandler fh = new FileHandler("serverLog.log");
             fh.setLevel(Level.FINE);
             logr_info.addHandler(fh);
             MyFormatter formatter = new MyFormatter();
@@ -319,6 +316,43 @@ public class Server {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * This function is used for getting the IP address of current server.
+     * @return will return the String of IP address.
+     */
+    public static String getRealIp() throws SocketException {
+        String localIp = null;
+        String netIp = null;
+
+        Enumeration<NetworkInterface> netInterfaces = NetworkInterface.getNetworkInterfaces();
+        InetAddress ip;
+        boolean find = false;
+        while (netInterfaces.hasMoreElements() && !find) {
+            NetworkInterface ni = netInterfaces.nextElement();
+            Enumeration<InetAddress> address = ni.getInetAddresses();
+            while (address.hasMoreElements()) {
+                ip = address.nextElement();
+                if (!ip.isSiteLocalAddress()
+                        && !ip.isLoopbackAddress()
+                        && !ip.getHostAddress().contains(":")) {
+                    netIp = ip.getHostAddress();
+                    find = true;
+                    break;
+                } else if (ip.isSiteLocalAddress()
+                        && !ip.isLoopbackAddress()
+                        && !ip.getHostAddress().contains(":")) {
+                    localIp = ip.getHostAddress();
+                }
+            }
+        }
+
+        if (netIp != null && !netIp.equals("")) {
+            return netIp;
+        } else {
+            return localIp;
         }
     }
 }
