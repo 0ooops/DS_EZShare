@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 
 /**
  * public and share funtions
