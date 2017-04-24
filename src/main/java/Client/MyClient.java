@@ -313,9 +313,16 @@ public class MyClient {
                 JSONObject responseType = recv.getJSONObject(0);
                 if (responseType.get("response").equals("error")) {
                     receiveData = readline;
+
                 } else {
                     JSONObject resource = recv.getJSONObject(1);
-                    int fileSize = (int) resource.get("resourceSize");
+                    int fileSize=0;
+                    try{
+                        fileSize = (int) resource.get("resourceSize");
+                    }catch (Exception E){
+                        System.out.println("download fail,file oversize ");
+                        System.exit(1);
+                    }
                     String fileName = (String) resource.get("name");
                     String randomName = randomAlphabetic(5);
                     fileName = fileName.equals("") ? randomName : fileName;
@@ -367,6 +374,7 @@ public class MyClient {
                         System.out.println("uri: " + qUri);
                         System.out.println("channel: " + qChannel);
                         System.out.println("ezserver: " + qEzserver);
+                        System.out.println();
                     }
                     System.out.println();
                     System.out.println("hit " + (recv.size() - 2) + " resources");
