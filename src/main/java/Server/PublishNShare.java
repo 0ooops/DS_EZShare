@@ -2,7 +2,7 @@ package Server;
 //package main.java.Server;
 
 /**
- * public and share funtions
+ * public and share functions
  * created by Jiacheng Chen
  */
 
@@ -19,6 +19,14 @@ public class PublishNShare {
      * publish resource in the server
      * @param obj
      * json object contain the resource
+     * @param resourceList
+     * the list that stores resources
+     * @param keys
+     * the list that stores key of the resources
+     * @param address
+     * ip address of the server
+     * @param port
+     * port of the server
      */
     public static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
                                      String address, int port) {
@@ -78,6 +86,16 @@ public class PublishNShare {
      *
      * @param obj
      * json object contain the resource
+     * @param resourceList
+     * the list that stores resources
+     * @param keys
+     * the list that stores key of the resources
+     * @param secret
+     * secret of the server
+     * @param address
+     * ip address of the server
+     * @param port
+     * port of the server
      */
     public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
                                    String address, int port) {
@@ -150,6 +168,10 @@ public class PublishNShare {
      *
      * @param obj
      * json object contain the resource
+     * @param address
+     * ip address of the server
+     * @param port
+     * port of the server
      */
     private static Resource getResource(JSONObject obj, String address, int port) {
         //get resource parameters
