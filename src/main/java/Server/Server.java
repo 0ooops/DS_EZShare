@@ -9,7 +9,7 @@ package Server;
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
-
+//import main.java.Client.MyFormatter;
 import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -104,10 +104,6 @@ public class Server {
             } else {
                 secret = randomAlphabetic(26);
             }
-            if (cmd.hasOption("debug")) {
-                setupDebug();
-                logr_debug.info("Setting debug on");
-            }
 
             // Print logfile info when starting
             logr_info.info("Using secret: " + secret);
@@ -118,6 +114,11 @@ public class Server {
             String sCurrentLine;
             while ((sCurrentLine = br.readLine()) != null) {
                 System.out.println(sCurrentLine);
+            }
+
+            if (cmd.hasOption("debug")) {
+                setupDebug();
+                logr_debug.info("Setting debug on");
             }
 
             // Add current host and port to serverList.
@@ -236,13 +237,7 @@ public class Server {
                 }
                 setupDebug();
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }

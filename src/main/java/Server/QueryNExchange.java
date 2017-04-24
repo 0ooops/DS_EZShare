@@ -13,6 +13,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashMap;
 
 public class QueryNExchange {
@@ -123,8 +124,8 @@ public class QueryNExchange {
         queryList = JSONArray.fromObject(receiveData);
 
         if (queryList.size() >= 3){
+            queryList.remove(queryList.size() - 1);
             queryList.remove(0);
-            queryList.remove(1);
             return queryList;
         } else {
             return null;
@@ -137,7 +138,7 @@ public class QueryNExchange {
      * @param serverList
      * @return JSONArray
      */
-    public static JSONArray exchange (JSONObject command, JSONArray serverList) {
+    public static JSONArray exchange (JSONObject command, JSONArray serverList) throws SocketException {
         JSONArray newList;
         JSONArray msgArray = new JSONArray();
         JSONObject msg = new JSONObject();
@@ -147,6 +148,13 @@ public class QueryNExchange {
                 newList = command.getJSONArray("serverList");
                 for (int i = 0; i < newList.size(); i++) {
                     if (!serverList.contains(newList.getJSONObject(i))) {
+                        if (serverList.getJSONObject(0).get("port").equals(newList.getJSONObject(i).get("port"))) {
+                            if (newList.getJSONObject(i).get("hostname").equals("localhost") ||
+                                    newList.getJSONObject(i).get("hostname").equals("127.0.0.1") ||
+                                    newList.getJSONObject(i).get("hostname").equals(Server.getRealIp())) {
+                                continue;
+                            }
+                        }
                         serverList.add(newList.getJSONObject(i));
                     }
                 }
