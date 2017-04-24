@@ -180,7 +180,7 @@ public class Server {
                 switch(cmd.get("command").toString()) {
                     case "PUBLISH":
                         sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
-                                clientSocket.getLocalAddress().getHostAddress(),
+                                getRealIp(),
                                 clientSocket.getLocalPort()));
                         break;
                     case "REMOVE":
@@ -188,7 +188,7 @@ public class Server {
                         break;
                     case "SHARE":
                         sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
-                                clientSocket.getLocalAddress().getHostAddress(),
+                                getRealIp(),
                                 clientSocket.getLocalPort()));
                         break;
                     case "FETCH":
