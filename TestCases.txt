@@ -1,3 +1,66 @@
+1.启动Server在重复的端口时 给个提示：Address already in use 就不用把全部打出后面那些exception哒~
+➜  Server_jar git:(master) java -jar Server.jar
+24/04/2017 10:11:10.973 - [Server.Server.main] - [INFO] - Starting the EZShare Server
+24/04/2017 10:11:10.994 - [Server.Server.main] - [INFO] - Using secret: zbJhHfUsgpAgYaKfHjoizkYfrZ
+24/04/2017 10:11:10.994 - [Server.Server.main] - [INFO] - Using advertised hostname: Dr. Stranger
+24/04/2017 10:11:10.994 - [Server.Server.main] - [INFO] - Bound to port 8080
+24/04/2017 10:11:10.995 - [Server.Server.main] - [INFO] - Started
+java.net.BindException: Address already in use
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.AbstractPlainSocketImpl.bind(AbstractPlainSocketImpl.java:387)
+	at java.net.ServerSocket.bind(ServerSocket.java:375)
+	at java.net.ServerSocket.<init>(ServerSocket.java:237)
+	at java.net.ServerSocket.<init>(ServerSocket.java:128)
+	at javax.net.DefaultServerSocketFactory.createServerSocket(ServerSocketFactory.java:218)
+	at Server.Server.main(Server.java:130)
+2.依旧还是会发生resultSize发两遍的情况
+步骤:
+启动Server1：默认端口 命令 ：java -jar Server.jar -exchangeinterval 60 -debug
+启动Server2：8001端口 命令：java -jar Server.jar -exchangeinterval 60 -debug -port 8001
+
+客户端：①-query（访问默认端口，以下的命令都是访问的默认端口的服务器） response success hit 0 resources
+(这个步骤主要是激发Server端写log Server端写完log就可以看到默认端口服务器的secrete哒)
+ ②客户端share file：java -jar Client.jar -share -uri /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/test.mp4 -secrete ###
+ （替换secrete部分及uri部分）
+ ③java -jar Client.jar -query 一切正常~
+ ④java -jar Client.jar -exchange -servers localhost:8001
+ ⑤稍微等待了一会，观察到8001端口Server端显示Auto-exchange is finished后开始后序操作。
+ ⑥查询8001端口的服务器：java -jar Client.jar -query -host localhost -port 8001 ----hit 1 resources 有刚刚share在默认端口的信息.
+ ⑦重新向【默认端口】的服务器share第二个文件dog.jpg文件。
+java -jar Client.jar -share -uri /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg -secret ### -name dog
+（替换secrete部分及uri部分）
+⑧java -jar Client.jar -query 一切正常~
+⑨下面就是见证奇迹的时候了！现在在等8001端口的服务器log里显示Auto-exchange is finished后我们准备查询8001端口数据 看是否新的file顺利实现同步
+⑩java -jar Client.jar -query -host localhost -port 8001
+那么问题就来了~~~输出结果如下：
+success!
+name: test
+tags: []
+uri: /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/test.mp4
+channel:
+ezserver: 10.0.0.124:8080
+
+name: null
+Exception in thread "main" java.lang.NullPointerException
+	at Client.MyClient.sendMessage(MyClient.java:373)
+	at Client.MyClient.main(MyClient.java:144)
+
+先别想~我们先加个debug再跑一次：java -jar Client.jar -query -host localhost -port 8001 -debug
+结果是：java -jar Client.jar -query -host localhost -port 8001 -debug
+    24/04/2017 11:35:38.178 - [Client.MyClient.main] - [INFO] - setting debug on
+    24/04/2017 11:35:38.248 - [Client.MyClient.queryCommand] - [FINE] - querying from localhost:8001
+    24/04/2017 11:35:38.262 - [Client.MyClient.sendMessage] - [FINE] - SENT:{"resourceTemplate":{"name":"","tags":[],"description":"","uri":"","channel":"","owner":""},"command":"QUERY","relay":"true"}
+    24/04/2017 11:35:40.278 - [Client.MyClient.sendMessage] - [FINE] - RECEIVED:
+    [{"response":"success"},
+    {"name":"test","tags":[],"description":"","uri":"/Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/test.mp4",
+    "channel":"","owner":"*","ezserver":"10.0.0.124:8080"},
+    {"resultSize":2},{"resultSize":2}]
+为了看的清楚我把格式先整一下变成上面这样 然后发现resultSize传了两次 且第二次share的file并没有出现。
+
+
+3.自始自终都不知道除了第一台Server之外的Server的secrete~~ 上面这个例子里我想反向测试8001端的share情况 不过解决了上面这个问题应该就没事了。
+
+-----------------------------------我是华丽的分割线-----------------------------------------------
 -publish -name "lms" -tags ["web", "html"] -description "The LMS page for unimelb." -uri "http://www.lms.unimelb.edu.au"
 
 issues: 
