@@ -230,7 +230,7 @@ public class Server {
             clientSocket.close();
             logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been closed.");
             if (args.hasOption("debug")) {
-                BufferedReader brDebug = new BufferedReader(new FileReader("./debug.log"));
+                BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                 String dCurrentLine;
                 while ((dCurrentLine = brDebug.readLine()) != null) {
                     System.out.println(dCurrentLine);
@@ -260,7 +260,7 @@ public class Server {
         LogManager.getLogManager().reset();
         logr_debug.setLevel(Level.ALL);
         try {
-            FileHandler fh = new FileHandler("debug.log");
+            FileHandler fh = new FileHandler("debug_" + getRealIp() + "_" + port +".log");
             fh.setLevel(Level.FINE);
             logr_debug.addHandler(fh);
             MyFormatter formatter = new MyFormatter();
@@ -294,7 +294,7 @@ public class Server {
                         serverList.remove(select);
                     }
                     if (args.hasOption("debug")) {
-                        BufferedReader brDebug = new BufferedReader(new FileReader("./debug.log"));
+                        BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                         String dCurrentLine;
                         while ((dCurrentLine = brDebug.readLine()) != null) {
                             System.out.println(dCurrentLine);
