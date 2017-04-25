@@ -40,6 +40,35 @@ connection fail
 多试几次都一样 因为服务器down了
 服务端报错：(截图)
 
+2.单台Server出现重复添加resources现象。
+①同样启动两个Server
+②share 图片在默认端口上 query查看一切正常
+③exchange 8001端口
+④等待exchange成功后，query 8001端口出现图片 一切正常
+⑤share 图片在8001端口 query8001端口发现hit 3 resources
+success!
+name: dog
+tags: []
+uri: /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg
+channel:
+ezserver: 10.0.0.124:8001
+
+name: dog
+tags: []
+uri: /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg
+channel:
+ezserver: 10.0.0.124:8080
+
+name: dog
+tags: []
+uri: /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg
+channel:
+ezserver: 10.0.0.124:8001
+
+
+hit 3 resources
+
+（此时8080默认端口倒是正常的 hit 2 resources）
 
 ------------------------------------------我也是华丽的分割线----------------------------------------------------
 1.启动Server在重复的端口时 给个提示：Address already in use 就不用把全部打出后面那些exception哒~
