@@ -12,3 +12,4 @@ logfile.log.*
 debug.log
 debug.log.*
 serverLog.*
+.DS_Store
