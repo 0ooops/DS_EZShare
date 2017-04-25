@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 
 /**
  * This class is used as server side in EZShare System. The server class
@@ -9,8 +9,8 @@ package main.java.Server;
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
-import main.java.Client.MyFormatter;
-//import Client.MyFormatter;
+//import main.java.Client.MyFormatter;
+import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;
@@ -281,13 +281,13 @@ public class Server {
                 if (serverList.size() > 1) {
                     int select = 1 + (int) (Math.random() * (serverList.size() - 1));
                     String host = serverList.getJSONObject(select).get("hostname").toString();
-                    int port = Integer.parseInt(serverList.getJSONObject(select).get("port").toString());
+                    int exchangePort = Integer.parseInt(serverList.getJSONObject(select).get("port").toString());
                     JSONObject cmd = new JSONObject();
                     cmd.put("command", "EXCHANGE");
                     cmd.put("serverList", serverList);
                     logr_debug.fine("Auto-exchange is working in every " + exchangeSecond + " seconds.");
                     logr_debug.fine("SENT: " + cmd.toString());
-                    receiveData = QueryNExchange.serverSend(host, port, cmd.toString());
+                    receiveData = QueryNExchange.serverSend(host, exchangePort, cmd.toString());
                     logr_debug.fine("RECEIVED: " + receiveData);
                     logr_debug.fine("Auto-exchange is finished.");
                     if (receiveData.equals("connection failed")) {

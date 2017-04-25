@@ -1,5 +1,5 @@
-//package Server;
-package main.java.Server;
+package Server;
+//package main.java.Server;
 
 /**
  * This class is used for querying and exchanging functions on EZShare System.

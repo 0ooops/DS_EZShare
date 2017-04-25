@@ -1,5 +1,5 @@
-//package Client;
-package main.java.Client;
+package Client;
+//package main.java.Client;
 
 /**
  * This class is used as the client side of EZShare System. The client can take legitimate user command as input,
@@ -9,10 +9,14 @@ package main.java.Client;
  */
 
 import org.apache.commons.cli.*;
+
 import java.util.logging.*;
+
 import net.sf.json.*;
+
 import java.io.*;
 import java.net.Socket;
+
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 public class MyClient {
@@ -22,7 +26,7 @@ public class MyClient {
      */
     private static int port = 8080;
     private static String host = "localhost";
-//    private static String host = "sunrise.cis.unimelb.edu.au";
+    //    private static String host = "sunrise.cis.unimelb.edu.au";
 //    private static int port = 3780;
     private static String channel = "";
     private static String description = "";
@@ -67,7 +71,9 @@ public class MyClient {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
         HelpFormatter formatter = new HelpFormatter();
-
+/**
+ * check if command is valid
+ */
         try {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
@@ -75,10 +81,17 @@ public class MyClient {
             System.exit(1);
             return;
         }
-
+/**
+ * check if port number is valid
+ */
         if (cmd.hasOption("port") || cmd.hasOption("host")) {
             if (cmd.hasOption("port") && cmd.hasOption("host")) {
                 host = cmd.getOptionValue("host");
+                String strPort = cmd.getOptionValue("port");
+                if (strPort.length() > 4) {
+                    System.out.println("port out of range,please give a valid port number~");
+                    System.exit(1);
+                }
                 try {
                     port = Integer.parseInt(cmd.getOptionValue("port"));
                 } catch (NumberFormatException E) {
@@ -92,7 +105,9 @@ public class MyClient {
                 return;
             }
         }
-
+/**
+ * setup log
+ */
         setupLogger();
         logr.info("setting debug on");
         /*
@@ -165,6 +180,12 @@ public class MyClient {
 
     }
 
+    /**
+     * dealing with exchange command
+     *
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject exchangeCommand(CommandLine cmd) {
         JSONObject exchange = new JSONObject();
         JSONArray serverList = new JSONArray();
@@ -174,6 +195,11 @@ public class MyClient {
             String[] tempServer = sServer.split(":");
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
+            String exPort = tempServer[1];
+            if (exPort.length() > 4) {
+                System.out.println("pls input a valid port");
+                System.exit(1);
+            }
             serv.put("port", tempServer[1]);
             serverList.add(serv);
         }
@@ -183,6 +209,12 @@ public class MyClient {
         return exchange;
     }
 
+    /**
+     * dealing with fetch command
+     *
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject fetchCommand(CommandLine cmd) {
         JSONObject fetch = queryCommand(cmd);
         fetch.put("command", "FETCH");
@@ -191,6 +223,12 @@ public class MyClient {
         return fetch;
     }
 
+    /**
+     * dealing with query command
+     *
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject queryCommand(CommandLine cmd) {
         JSONObject query = new JSONObject();
         JSONObject resourceTemplate = new JSONObject();
@@ -221,6 +259,11 @@ public class MyClient {
         return query;
     }
 
+    /**
+     * dealing with share command
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject shareCommand(CommandLine cmd) {
         JSONObject share = publishCommand(cmd);
         uri = cmd.getOptionValue("uri");
@@ -233,6 +276,11 @@ public class MyClient {
         return share;
     }
 
+    /**
+     * dealing with remove command
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject removeCommand(CommandLine cmd) {
         JSONObject remove = publishCommand(cmd);
         uri = cmd.getOptionValue("uri");
@@ -243,6 +291,11 @@ public class MyClient {
         return remove;
     }
 
+    /**
+     * dealing with publish command
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
     private static JSONObject publishCommand(CommandLine cmd) {
         uri = cmd.getOptionValue("uri");
         name = cmd.hasOption("name") ? cmd.getOptionValue("name") : "";
@@ -275,13 +328,14 @@ public class MyClient {
 
     /**
      * connection and transmission.
+     *
      * @param sendJson json object to be sent.
      * @param cmd      cmd may specify another server host and port number.
      */
     private static void sendMessage(String command, JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
         String receiveData = "";
-        boolean fetchSuccess= false;
+        boolean fetchSuccess = false;
 
         Socket connection;
         try {
@@ -316,11 +370,11 @@ public class MyClient {
 
                 } else {
                     JSONObject resource = recv.getJSONObject(1);
-                    int fileSize=0;
-                    try{
+                    int fileSize = 0;
+                    try {
                         fileSize = (int) resource.get("resourceSize");
-                    }catch (Exception E){
-                        System.out.println("download fail,file oversize ");
+                    } catch (Exception E) {
+                        System.out.println("fail to download ,file oversize ");
                         System.exit(1);
                     }
                     String fileName = (String) resource.get("name");
@@ -337,20 +391,18 @@ public class MyClient {
                         fos.write(buffer, 0, read);
                     }
                     System.out.println("done");
-                    fetchSuccess=true;
+                    fetchSuccess = true;
                 }
 
             }
             if (cmd.hasOption("debug")) {
                 //print logfile
                 BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
-                //uncomment below if running in maven before build.
-                //BufferedReader br = new BufferedReader(new FileReader("src/main/java/Client/logfile.log"));
                 String sCurrentLine;
                 while ((sCurrentLine = br.readLine()) != null) {
                     System.out.println(sCurrentLine);
                 }
-            } else if (!fetchSuccess){
+            } else if (!fetchSuccess) {
                 //print out
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
                 JSONObject resp = recv.getJSONObject(0);
@@ -391,6 +443,9 @@ public class MyClient {
         }
     }
 
+    /**
+     * setup log file.
+     */
     private static void setupLogger() {
         LogManager.getLogManager().reset();
         logr.setLevel(Level.ALL);
