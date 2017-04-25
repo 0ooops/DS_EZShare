@@ -1,3 +1,47 @@
+1.启动Server1：默认端口 命令 ：java -jar Server.jar -exchangeinterval 60 -debug
+  启动Server2：8001端口 命令：java -jar Server.jar -exchangeinterval 60 -debug -port 8001
+步骤：
+  ①Query 两个Server 一切正常！
+➜ java -jar Client.jar -query -port 8001 -host localhost
+success!
+
+hit 0 resources
+➜ java -jar Client.jar -query
+success!
+
+hit 0 resources
+
+②share 图片在8001端口！
+➜  java -jar Client.jar -share -uri /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg -secret ApgpBMjiIPsNuivfksjjYHQdBI -name dog -host localhost -port 8001
+success!
+③query 8001端口 一切正常！
+➜ java -jar Client.jar -query -port 8001 -host localhost
+success!
+name: dog
+tags: []
+uri: /Users/jiangyiming/Desktop/DS_EZShare/src/main/java/Server/dog_pic.jpg
+channel:
+ezserver: 10.0.0.124:8001
+
+
+hit 1 resources
+
+④执行exchange命令，指定与默认端口8080进行交互
+➜ java -jar Client.jar -exchange -servers localhost:8080
+success!
+
+⑤等待服务器交互完成信息~但并没有进行exchange ，发现在执行④步骤后8080端口就down机了
+➜ java -jar Client.jar -query
+connection fail
+➜ java -jar Client.jar -query
+connection fail
+➜ java -jar Client.jar -query
+connection fail
+多试几次都一样 因为服务器down了
+服务端报错：(截图)
+
+
+------------------------------------------我也是华丽的分割线----------------------------------------------------
 1.启动Server在重复的端口时 给个提示：Address already in use 就不用把全部打出后面那些exception哒~
 ➜  Server_jar git:(master) java -jar Server.jar
 24/04/2017 10:11:10.973 - [Server.Server.main] - [INFO] - Starting the EZShare Server
