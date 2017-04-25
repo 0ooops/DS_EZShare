@@ -9,7 +9,7 @@ package Server;
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
-
+//import main.java.Client.MyFormatter;
 import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -104,10 +104,6 @@ public class Server {
             } else {
                 secret = randomAlphabetic(26);
             }
-            if (cmd.hasOption("debug")) {
-                setupDebug();
-                logr_debug.info("Setting debug on");
-            }
 
             // Print logfile info when starting
             logr_info.info("Using secret: " + secret);
@@ -118,6 +114,11 @@ public class Server {
             String sCurrentLine;
             while ((sCurrentLine = br.readLine()) != null) {
                 System.out.println(sCurrentLine);
+            }
+
+            if (cmd.hasOption("debug")) {
+                setupDebug();
+                logr_debug.info("Setting debug on");
             }
 
             // Add current host and port to serverList.
@@ -229,20 +230,14 @@ public class Server {
             clientSocket.close();
             logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been closed.");
             if (args.hasOption("debug")) {
-                BufferedReader brDebug = new BufferedReader(new FileReader("./debug.log"));
+                BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                 String dCurrentLine;
                 while ((dCurrentLine = brDebug.readLine()) != null) {
                     System.out.println(dCurrentLine);
                 }
                 setupDebug();
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -265,7 +260,7 @@ public class Server {
         LogManager.getLogManager().reset();
         logr_debug.setLevel(Level.ALL);
         try {
-            FileHandler fh = new FileHandler("debug.log");
+            FileHandler fh = new FileHandler("debug_" + getRealIp() + "_" + port +".log");
             fh.setLevel(Level.FINE);
             logr_debug.addHandler(fh);
             MyFormatter formatter = new MyFormatter();
@@ -286,20 +281,20 @@ public class Server {
                 if (serverList.size() > 1) {
                     int select = 1 + (int) (Math.random() * (serverList.size() - 1));
                     String host = serverList.getJSONObject(select).get("hostname").toString();
-                    int port = Integer.parseInt(serverList.getJSONObject(select).get("port").toString());
+                    int exchangePort = Integer.parseInt(serverList.getJSONObject(select).get("port").toString());
                     JSONObject cmd = new JSONObject();
                     cmd.put("command", "EXCHANGE");
                     cmd.put("serverList", serverList);
                     logr_debug.fine("Auto-exchange is working in every " + exchangeSecond + " seconds.");
                     logr_debug.fine("SENT: " + cmd.toString());
-                    receiveData = QueryNExchange.serverSend(host, port, cmd.toString());
+                    receiveData = QueryNExchange.serverSend(host, exchangePort, cmd.toString());
                     logr_debug.fine("RECEIVED: " + receiveData);
                     logr_debug.fine("Auto-exchange is finished.");
                     if (receiveData.equals("connection failed")) {
                         serverList.remove(select);
                     }
                     if (args.hasOption("debug")) {
-                        BufferedReader brDebug = new BufferedReader(new FileReader("./debug.log"));
+                        BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                         String dCurrentLine;
                         while ((dCurrentLine = brDebug.readLine()) != null) {
                             System.out.println(dCurrentLine);
