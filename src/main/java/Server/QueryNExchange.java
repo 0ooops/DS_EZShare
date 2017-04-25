@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 
 /**
  * This class is used for querying and exchanging functions on EZShare System.
@@ -147,14 +147,11 @@ public class QueryNExchange {
             if (command.getJSONArray("serverList").size() != 0) {
                 newList = command.getJSONArray("serverList");
                 for (int i = 0; i < newList.size(); i++) {
+                    if (newList.getJSONObject(i).get("hostname").toString().equals("localhost") ||
+                            newList.getJSONObject(i).get("hostname").toString().equals("127.0.0.1")) {
+                        newList.getJSONObject(i).put("hostname", Server.getRealIp());
+                    }
                     if (!serverList.contains(newList.getJSONObject(i))) {
-                        if (serverList.getJSONObject(0).get("port").equals(newList.getJSONObject(i).get("port"))) {
-                            if (newList.getJSONObject(i).get("hostname").equals("localhost") ||
-                                    newList.getJSONObject(i).get("hostname").equals("127.0.0.1") ||
-                                    newList.getJSONObject(i).get("hostname").equals(Server.getRealIp())) {
-                                continue;
-                            }
-                        }
                         serverList.add(newList.getJSONObject(i));
                     }
                 }

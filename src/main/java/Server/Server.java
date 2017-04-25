@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 
 /**
  * This class is used as server side in EZShare System. The server class
@@ -9,8 +9,8 @@ package Server;
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
-//import main.java.Client.MyFormatter;
-import Client.MyFormatter;
+import main.java.Client.MyFormatter;
+//import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;

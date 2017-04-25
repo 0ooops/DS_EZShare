@@ -1,5 +1,5 @@
-package Server;
-//package main.java.Server;
+//package Server;
+package main.java.Server;
 
 /**
  * This class is used for removing and fetching resources on EZShare System.

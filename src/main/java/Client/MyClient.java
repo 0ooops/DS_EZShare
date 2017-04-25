@@ -1,5 +1,5 @@
-package Client;
-//package main.java.Client;
+//package Client;
+package main.java.Client;
 
 /**
  * This class is used as the client side of EZShare System. The client can take legitimate user command as input,
