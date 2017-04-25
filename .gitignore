@@ -5,7 +5,6 @@ DS_EZShare.iml
 
 # Compiling
 *.class
-/out/
 
 # Log
 logfile.log
