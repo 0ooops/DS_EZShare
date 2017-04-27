@@ -24,11 +24,11 @@ public class Client {
     /**
      * default server host and port
      */
-    private static int port = 8080;
-    private static String host = "localhost";
-//    private static String host = "sunrise.cis.unimelb.edu.au";
-//    private static int port = 3781;
-//    private static String host = "10.13.255.204";
+//    private static int port = 8080;
+//    private static String host = "localhost";
+    private static String host = "sunrise.cis.unimelb.edu.au";
+    private static int port = 3781;
+    //    private static String host = "10.13.255.204";
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -262,6 +262,7 @@ public class Client {
 
     /**
      * dealing with share command
+     *
      * @param cmd commands
      * @return the JSONObject message to be sent to the server
      */
@@ -279,6 +280,7 @@ public class Client {
 
     /**
      * dealing with remove command
+     *
      * @param cmd commands
      * @return the JSONObject message to be sent to the server
      */
@@ -294,6 +296,7 @@ public class Client {
 
     /**
      * dealing with publish command
+     *
      * @param cmd commands
      * @return the JSONObject message to be sent to the server
      */
@@ -375,24 +378,37 @@ public class Client {
                     } catch (NumberFormatException E) {
                         System.out.println("fail to download ,file oversize ");
                         System.exit(1);
-                    } catch (Exception E){
+                    } catch (Exception E) {
                         System.out.println("This should not happan, otherwise, you are using Aaron's server.LOL");
                         System.exit(1);
                     }
-                    String fileType = uri.substring(uri.indexOf(".") + 1);
-                    String fileName = (String) resource.get("name");
-                    String randomName = randomAlphabetic(5)+"."+fileType;
-                    fileName = fileName.equals("") ? randomName : fileName;
+
+                    String fileType = uri.substring(uri.lastIndexOf(".") + 1);
+                    String fileName = randomAlphabetic(5) + "." + fileType;
                     FileOutputStream fos = new FileOutputStream(fileName);
+
                     byte[] buffer = new byte[4096];
                     int readRes;
                     int remaining = fileSize;
-                    System.out.println("receiving...");
+                    if (!cmd.hasOption("debug")) {
+                        System.out.println("success!");
+                        System.out.println();
+                        System.out.println("receiving...");
+                        System.out.println();
+                    }
                     while ((readRes = in.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
                         remaining -= readRes;
                         fos.write(buffer, 0, readRes);
                     }
-                    System.out.println("done");
+                    if (!cmd.hasOption("debug")) {
+                        System.out.println("name: " + resource.get("name"));
+                        System.out.println("uri: " + uri);
+                        System.out.println("description: " + resource.get("description"));
+                        System.out.println("channel: " + resource.get("channel"));
+                        System.out.println();
+                        System.out.println("done!");
+                        System.out.println("your file stores in the current path and the file name is: " + fileName);
+                    }
                     fetchSuccess = true;
                 }
 
@@ -406,7 +422,7 @@ public class Client {
                 }
             } else if (!fetchSuccess) {
                 //print out
-                receiveData="["+receiveData.substring(0,receiveData.length()-1)+"]";
+                receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
                 JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
 
                 JSONObject resp = recv.getJSONObject(0);
