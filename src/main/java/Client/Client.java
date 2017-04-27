@@ -26,7 +26,7 @@ public class Client {
      */
 //    private static int port = 8080;
 //    private static String host = "localhost";
-    private static String host = "sunrise.cis.unimelb.edu.au";
+        private static String host = "sunrise.cis.unimelb.edu.au";
     private static int port = 3781;
     //    private static String host = "10.13.255.204";
     private static String channel = "";
@@ -351,7 +351,7 @@ public class Client {
             try {
                 connection.setSoTimeout(10 * 1000);
             } catch (Exception e) {
-                System.out.println("connection fail");
+                System.out.println("the server does not response anything");
                 System.exit(1);
             }
             if (!command.equals(FETCH)) {
@@ -367,7 +367,7 @@ public class Client {
                 logr.fine("RECEIVED:" + readline);
                 JSONObject recv = JSONObject.fromObject(readline);
                 if (recv.get("response").equals("error")) {
-                    receiveData = readline;
+                    receiveData = readline + ",";
                 } else {
                     String readResource = in.readUTF();
                     logr.fine("RECEIVED:" + readResource);
@@ -449,7 +449,8 @@ public class Client {
                         System.out.println();
                     }
                     System.out.println();
-                    System.out.println("hit " + (recv.size() - 2) + " resource(s)");
+                    int resultSize = (recv.size() - 2) > 0 ? (recv.size() - 2) : 0;
+                    System.out.println("hit " + resultSize + " resource(s)");
                 }
             }
             in.close();
