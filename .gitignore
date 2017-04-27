@@ -13,3 +13,5 @@ debug.log
 debug.log.*
 serverLog.*
 .DS_Store
+*.log
+*.lck

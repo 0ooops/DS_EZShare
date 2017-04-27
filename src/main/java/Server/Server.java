@@ -9,8 +9,8 @@ package Server;
  * @author: Jiayu Wang
  * @date: April 5, 2017
  */
-//import main.java.Client.MyFormatter;
-import Client.MyFormatter;
+import main.java.Client.MyFormatter;
+//import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;
@@ -178,42 +178,50 @@ public class Server {
                 receiveData = in.readUTF();
                 logr_debug.fine("RECEIVED: " + receiveData);
                 cmd = JSONObject.fromObject(receiveData);
-                switch(cmd.get("command").toString()) {
-                    case "PUBLISH":
-                        sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
-                                getRealIp(),
-                                clientSocket.getLocalPort()));
-                        break;
-                    case "REMOVE":
-                    	sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
-                        break;
-                    case "SHARE":
-                        sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
-                                getRealIp(),
-                                clientSocket.getLocalPort()));
-                        break;
-                    case "FETCH":
-                        fileResponse = RemoveNFetch.fetch(cmd, resourceList);
-                        sendMsg.addAll(fileResponse);
-                        if (fileResponse.getJSONObject(0).get("response").equals("success")) {
-                            String uri = cmd.getJSONObject("resourceTemplate").get("uri").toString();
-                            file = new FileInputStream(uri);
-                        }
-                        break;
-                    case "QUERY":
-                        sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList));
-                        break;
-                    case "EXCHANGE":
-                        sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
-                        break;
-                    default:
-                        msg.put("response", "error");
-                        msg.put("errorMessage", "invalid command");
-                        sendMsg.add(msg);
-                        break;
+                if (!cmd.containsKey("command")) {
+                    msg.put("response", "error");
+                    msg.put("errorMessage", "missing or incorrect type for command");
+                    sendMsg.add(msg);
+                } else {
+                    switch (cmd.get("command").toString()) {
+                        case "PUBLISH":
+                            sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
+                                    getRealIp(),
+                                    clientSocket.getLocalPort()));
+                            break;
+                        case "REMOVE":
+                            sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
+                            break;
+                        case "SHARE":
+                            sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
+                                    getRealIp(),
+                                    clientSocket.getLocalPort()));
+                            break;
+                        case "FETCH":
+                            fileResponse = RemoveNFetch.fetch(cmd, resourceList);
+                            sendMsg.addAll(fileResponse);
+                            if (fileResponse.getJSONObject(0).get("response").equals("success")) {
+                                String uri = cmd.getJSONObject("resourceTemplate").get("uri").toString();
+                                file = new FileInputStream(uri);
+                            }
+                            break;
+                        case "QUERY":
+                            sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList));
+                            break;
+                        case "EXCHANGE":
+                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
+                            break;
+                        default:
+                            msg.put("response", "error");
+                            msg.put("errorMessage", "invalid command");
+                            sendMsg.add(msg);
+                            break;
+                    }
                 }
                 logr_debug.fine("SENT: " + sendMsg.toString());
-                out.writeUTF(sendMsg.toString());
+                for (int i = 0; i < sendMsg.size(); i++) {
+                    out.writeUTF(sendMsg.getJSONObject(i).toString());
+                }
                 Thread.sleep(1000);
                 out.flush();
                 // Sending fetched file to client.

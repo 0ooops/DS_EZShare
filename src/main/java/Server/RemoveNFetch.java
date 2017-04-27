@@ -65,17 +65,20 @@ public class RemoveNFetch {
 			msg.put("response", "error");
 			msg.put("errorMessage", "missing resourceTemplate");
 			response.add(msg);
+		} else if (!command.getJSONObject("resourceTemplate").containsKey("uri")) {
+			msg.put("response", "error");
+			msg.put("errorMessage", "invalid resourceTemplate");
+			response.add(msg);
 		} else {
 			String cmdUri = command.getJSONObject("resourceTemplate").getString("uri");
-			String cmdChannel = command.getJSONObject("resourceTemplate").getString("channel");
+            String cmdChannel = "";
+            if (command.getJSONObject("resourceTemplate").containsKey("channel")) {
+                cmdChannel = command.getJSONObject("resourceTemplate").getString("channel");
+            }
 			for (Resource src : resourceList.values()) {
 				if (src.getChannel().equals(cmdChannel) && src.getUri().equals(cmdUri)) {
 					File f = new File(cmdUri);
-					if (!f.exists()) {
-						msg.put("response", "error");
-						msg.put("errorMessage", "invalid resourceTemplate");
-						response.add(msg);
-					} else {
+					if (f.exists()) {
 						msg.put("response", "success");
 						newSrc = src.toJSON();
 						newSrc.put("resourceSize", f.length());
