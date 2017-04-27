@@ -186,10 +186,11 @@ public class QueryNExchange {
             out.flush();
 
             do {
-                receiveData = in.readUTF();
+                receiveData += in.readUTF() + ",";
                 Thread.sleep(1000);
             } while (in.available() > 0);
 
+            receiveData = "[" + receiveData.substring(0, receiveData.length()-1) + "]";
             connection.close();
 
         } catch (IOException e){
