@@ -24,10 +24,11 @@ public class Client {
     /**
      * default server host and port
      */
-//    private static int port = 8080;
-//    private static String host = "localhost";
-    private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 3781;
+    private static int port = 8080;
+    private static String host = "localhost";
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 3781;
+//    private static String host = "10.13.255.204";
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -88,7 +89,7 @@ public class Client {
             if (cmd.hasOption("port") && cmd.hasOption("host")) {
                 host = cmd.getOptionValue("host");
                 String strPort = cmd.getOptionValue("port");
-                if (strPort.length() > 4) {
+                if (strPort.length() > 5) {
                     System.out.println("port out of range,please give a valid port number~");
                     System.exit(1);
                 }
@@ -196,7 +197,7 @@ public class Client {
             JSONObject serv = new JSONObject();
             serv.put("hostname", tempServer[0]);
             String exPort = tempServer[1];
-            if (exPort.length() > 4) {
+            if (exPort.length() > 5) {
                 System.out.println("pls input a valid port");
                 System.exit(1);
             }
@@ -336,7 +337,6 @@ public class Client {
         String sendData = sendJson.toString();
         String receiveData = "";
         boolean fetchSuccess = false;
-
         Socket connection;
         try {
             connection = new Socket(host, port);
