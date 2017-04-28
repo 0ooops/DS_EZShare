@@ -359,7 +359,7 @@ public class Client {
             try {
                 connection.setSoTimeout(20 * 1000);
             } catch (Exception e) {
-                System.out.println("the server does not response anything");
+                System.out.println("The client side terminates the connection as the server does not response anything");
                 System.exit(1);
             }
             if (!command.equals(FETCH)) {
@@ -509,13 +509,13 @@ public class Client {
                 if (comd.equals("")) {
                     comd = arg;
                 } else {
-                    System.out.println("multiple commands detected,pls just give one command");
+                    System.out.println("multiple commands detected, pls just give one command");
                     System.exit(1);
                 }
             }
         }
         if (comd.equals("")) {
-            System.out.println("pls give a command(publish,share,or fetch?)");
+            System.out.println("pls give your command(publish, share, or fetch?)");
             System.exit(1);
         }
         return comd;
