@@ -10,6 +10,8 @@ package Client;
 
 import org.apache.commons.cli.*;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.*;
 
 import net.sf.json.*;
@@ -24,10 +26,10 @@ public class Client {
     /**
      * default server host and port
      */
-//    private static int port = 8080;
-//    private static String host = "localhost";
-        private static String host = "sunrise.cis.unimelb.edu.au";
-    private static int port = 3781;
+    private static int port = 8080;
+    private static String host = "localhost";
+//    private static String host = "sunrise.cis.unimelb.edu.au";
+//    private static int port = 3781;
     //    private static String host = "10.13.255.204";
     private static String channel = "";
     private static String description = "";
@@ -122,7 +124,7 @@ public class Client {
             System.out.println("Please choose commands from above");
             System.exit(1);
         } else {
-            String command = args[0];
+            String command = searchCommand(args);
             switch (command) {
                 case PUBLISH:
                     if (!cmd.hasOption("uri")) {
@@ -479,5 +481,31 @@ public class Client {
         } catch (java.io.IOException e) {
             logr.finer("File logger not working.");
         }
+    }
+
+    private static String searchCommand(String[] args) {
+        String comd = "";
+        Set<String> commandSet = new HashSet<>();
+        commandSet.add(PUBLISH);
+        commandSet.add(REMOVE);
+        commandSet.add(SHARE);
+        commandSet.add(QUERY);
+        commandSet.add(FETCH);
+        commandSet.add(EXCHANGE);
+        for (String arg : args) {
+            if (commandSet.contains(arg)) {
+                if (comd.equals("")) {
+                    comd = arg;
+                } else {
+                    System.out.println("multiple commands detected,pls just give one command");
+                    System.exit(1);
+                }
+            }
+        }
+        if (comd.equals("")) {
+            System.out.println("pls give a command(publish,share,or fetch?)");
+            System.exit(1);
+        }
+        return comd;
     }
 }
