@@ -48,7 +48,8 @@ public class PublishNShare {
                 if (uri.equals("") || owner.equals("*")) {
                     response.put("response", "error");
                     response.put("errorMessage", "invalid resource");
-                } else if (!(uri.startsWith("http://") || uri.startsWith("ftp://"))) {
+                } else if (!(uri.startsWith("http://") || uri.startsWith("ftp://")
+                        || uri.startsWith("https://"))) {
                     response.put("response", "error");
                     response.put("errorMessage", "cannot publish resource");
                 } else {
