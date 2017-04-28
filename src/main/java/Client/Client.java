@@ -13,9 +13,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import java.util.logging.*;
+
 import net.sf.json.*;
+
 import java.io.*;
 import java.net.Socket;
+
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -49,7 +52,7 @@ public class Client {
 
     public static void main(String[] args) {
         /**
-         * all client side commands.
+         * all valid client side command line arguments.
          */
         Options options = new Options();
         options.addOption("channel", true, "channel");
@@ -75,12 +78,12 @@ public class Client {
         CommandLine cmd;
         HelpFormatter formatter = new HelpFormatter();
 /**
- * check if command is valid
+ * check if commands are valid
  */
         try {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            formatter.printHelp("commands", options);
+            formatter.printHelp("pls choose commands from below", options);
             System.exit(1);
             return;
         }
@@ -113,12 +116,12 @@ public class Client {
  */
         setupLogger();
         logr.info("setting debug on");
-        /*
-          1.judge whether the client gives any command.
-          2.verify the command.
-          3.produce corresponding JSON Objects for sending to the server.
-          4.send message.
-         */
+/**
+ 1.judge whether the client gives any command.
+ 2.verify the command.
+ 3.produce corresponding JSON Objects for sending to the server.
+ 4.send message.
+ */
         if (args == null || args.length == 0) {
             formatter.printHelp("commands", options);
             System.out.println("Please choose commands from above");
@@ -488,6 +491,7 @@ public class Client {
 
     /**
      * search for the command, and the system only allow one command.
+     *
      * @param args all parameters typed by the client
      * @return the command if has one.
      */
