@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * A class that represent the list of primary keys

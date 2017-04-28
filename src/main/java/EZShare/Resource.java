@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * The class Resource is an entity used for storing resources records.

@@ -1,4 +1,4 @@
-package Client;
+package EZShare;
 
 /**
  * This class is used as formatter for logfiles.

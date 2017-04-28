@@ -1,4 +1,4 @@
-package Client;
+package EZShare;
 
 /**
  * This class is used as the client side of EZShare System. The client can take legitimate user command as input,
@@ -29,9 +29,6 @@ public class Client {
      */
     private static int port = 8080;
     private static String host = "localhost";
-//    private static String host = "sunrise.cis.unimelb.edu.au";
-//    private static int port = 3781;
-
     private static String channel = "";
     private static String description = "";
     private static String name = "";

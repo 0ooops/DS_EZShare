@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * This class is used for querying and exchanging functions on EZShare System.

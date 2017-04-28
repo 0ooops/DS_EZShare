@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * public and share functions

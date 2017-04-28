@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * This class is used for removing and fetching resources on EZShare System.

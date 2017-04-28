@@ -1,4 +1,4 @@
-package Server;
+package EZShare;
 
 /**
  * This class is used as server side in EZShare System. The server class
@@ -9,7 +9,6 @@ package Server;
  * @date: April 5, 2017
  */
 
-import Client.MyFormatter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;
