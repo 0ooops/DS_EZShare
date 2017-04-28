@@ -49,7 +49,7 @@ public class PublishNShare {
                     response.put("response", "error");
                     response.put("errorMessage", "invalid resource");
                 } else if (!(uri.startsWith("http://") || uri.startsWith("ftp://")
-                        || uri.startsWith("https://"))) {
+                        || uri.startsWith("https://") || uri.startsWith("jar://"))) {
                     response.put("response", "error");
                     response.put("errorMessage", "cannot publish resource");
                 } else {
