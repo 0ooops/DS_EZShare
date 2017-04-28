@@ -1,5 +1,4 @@
 package Server;
-//package main.java.Server;
 
 /**
  * public and share functions
@@ -28,7 +27,7 @@ public class PublishNShare {
      * @param port
      * port of the server
      */
-    public static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+    public synchronized static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
                                      String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
@@ -97,10 +96,9 @@ public class PublishNShare {
      * @param port
      * port of the server
      */
-    public static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
+    public synchronized static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
                                    String address, int port) {
         //json object contains command respond
-        //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
 
         //check if json contains a secret

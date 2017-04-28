@@ -1,5 +1,4 @@
 package Client;
-//package main.java.Client;
 
 /**
  * This class is used as the client side of EZShare System. The client can take legitimate user command as input,
@@ -12,14 +11,13 @@ import org.apache.commons.cli.*;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import java.util.logging.*;
-
 import net.sf.json.*;
-
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
+
 
 public class Client {
     private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
@@ -30,7 +28,7 @@ public class Client {
     private static String host = "localhost";
 //    private static String host = "sunrise.cis.unimelb.edu.au";
 //    private static int port = 3781;
-    //    private static String host = "10.13.255.204";
+
     private static String channel = "";
     private static String description = "";
     private static String name = "";
@@ -38,6 +36,7 @@ public class Client {
     private static String tags = "";
     private static String uri = "";
     private static String ezserver = null;
+    private static String relay = "false";
     /**
      * all valid commands.
      */
@@ -70,6 +69,7 @@ public class Client {
         options.addOption("share", false, "share resource on server");
         options.addOption("tags", true, "resource tags, tag1,tag2,tag3,...");
         options.addOption("uri", true, "resource URI");
+        options.addOption("relay", true, "whether query from other servers");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -248,6 +248,9 @@ public class Client {
                 tagArray.add(stags[i]);
             }
         }
+        if (cmd.hasOption("relay")) {
+            relay = cmd.getOptionValue("relay");
+        }
         resourceTemplate.put("name", name);
         resourceTemplate.put("tags", tagArray);
         resourceTemplate.put("description", description);
@@ -257,7 +260,7 @@ public class Client {
         resourceTemplate.put("ezserver", ezserver);
         query.put("resourceTemplate", resourceTemplate);
         query.put("command", "QUERY");
-        query.put("relay", "true");
+        query.put("relay", relay);
         logr.fine("querying from " + host + ":" + port);
         return query;
     }
@@ -351,7 +354,7 @@ public class Client {
             out.flush();
             logr.fine("SENT:" + sendData);
             try {
-                connection.setSoTimeout(10 * 1000);
+                connection.setSoTimeout(20 * 1000);
             } catch (Exception e) {
                 System.out.println("the server does not response anything");
                 System.exit(1);
@@ -483,6 +486,11 @@ public class Client {
         }
     }
 
+    /**
+     * search for the command, and the system only allow one command.
+     * @param args all parameters typed by the client
+     * @return the command if has one. 
+     */
     private static String searchCommand(String[] args) {
         String comd = "";
         Set<String> commandSet = new HashSet<>();

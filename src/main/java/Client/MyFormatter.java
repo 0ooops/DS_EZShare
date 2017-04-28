@@ -1,5 +1,4 @@
 package Client;
-//package main.java.Client;
 
 /**
  * This class is used as formatter for logfiles.
