@@ -489,7 +489,7 @@ public class Client {
     /**
      * search for the command, and the system only allow one command.
      * @param args all parameters typed by the client
-     * @return the command if has one. 
+     * @return the command if has one.
      */
     private static String searchCommand(String[] args) {
         String comd = "";
