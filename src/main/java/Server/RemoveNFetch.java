@@ -1,5 +1,4 @@
 package Server;
-//package main.java.Server;
 
 /**
  * This class is used for removing and fetching resources on EZShare System.
@@ -12,6 +11,7 @@ import net.sf.json.JSONObject;
 import java.io.*;
 import java.util.HashMap;
 
+
 public class RemoveNFetch {
 	/**
 	 * This function is used for removing resource.
@@ -20,7 +20,7 @@ public class RemoveNFetch {
 	 * @param keys
 	 * @return JSONObject
 	 */
-	public static JSONObject remove(JSONObject command, HashMap<Integer, Resource> resourceList, KeyList keys) {
+	public synchronized static JSONObject remove(JSONObject command, HashMap<Integer, Resource> resourceList, KeyList keys) {
 		JSONObject response = new JSONObject();
 
 		if (!command.containsKey("resource")) {
@@ -56,7 +56,7 @@ public class RemoveNFetch {
 	 * @param resourceList
 	 * @return JSONArray
 	 */
-	public static JSONArray fetch(JSONObject command, HashMap<Integer, Resource> resourceList) {
+	public synchronized static JSONArray fetch(JSONObject command, HashMap<Integer, Resource> resourceList) {
 		JSONArray response = new JSONArray();
 		JSONObject msg = new JSONObject();
 		JSONObject newSrc;

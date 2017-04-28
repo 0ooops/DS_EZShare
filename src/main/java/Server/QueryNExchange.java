@@ -1,5 +1,4 @@
 package Server;
-//package main.java.Server;
 
 /**
  * This class is used for querying and exchanging functions on EZShare System.
@@ -16,6 +15,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 
+
 public class QueryNExchange {
     /**
      * This function is mainly for parsing the "relay" argument and overall control.
@@ -25,7 +25,10 @@ public class QueryNExchange {
      * @return will return a JSONArray fullQueryList
      */
     public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList) {
-        boolean relay = Boolean.parseBoolean(command.get("relay").toString());
+        String relay = "false";
+        if (command.containsKey("relay")) {
+            relay = command.get("relay").toString();
+        }
         JSONObject response = new JSONObject();
         JSONObject size = new JSONObject();
         JSONArray fullQueryList = new JSONArray();
@@ -38,14 +41,14 @@ public class QueryNExchange {
         } else {
             response.put("response", "success");
             fullQueryList.add(response);
-            if (!relay) {
-                fullQueryList.addAll(selfQuery(command, resourceList));
-            } else {
-                command.put("relay", false);
+            if (relay.equals("true") || relay.equals("True")) {
+                command.put("relay", "false");
                 fullQueryList.addAll(selfQuery(command, resourceList));
                 for(int i = 1; i < serverList.size(); i++) {
                     fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
                 }
+            } else {
+                fullQueryList.addAll(selfQuery(command, resourceList));
             }
             size.put("resultSize", fullQueryList.size() - 1);
             fullQueryList.add(size);

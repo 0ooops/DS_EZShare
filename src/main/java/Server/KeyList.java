@@ -1,5 +1,4 @@
 package Server;
-//package main.java.Server;
 
 /**
  * A class that represent the list of primary keys
