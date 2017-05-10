@@ -1,7 +1,7 @@
 # IDEA
 .idea
-DS_Assignment1.iml
-DS_EZShare.iml
+.git
+*.iml
 
 # Compiling
 *.class
@@ -16,3 +16,4 @@ serverLog.*
 *.log
 *.lck
 *.log.*
+
