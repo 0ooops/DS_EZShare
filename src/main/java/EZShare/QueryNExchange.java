@@ -24,7 +24,7 @@ public class QueryNExchange {
      * @param serverList central server list
      * @return will return a JSONArray fullQueryList
      */
-    public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList) {
+    public static JSONArray query (JSONObject command, HashMap<Integer, Resource> resourceList, JSONArray serverList, Boolean secure) {
         String relay = "false";
         if (command.containsKey("relay")) {
             relay = command.get("relay").toString();
@@ -45,7 +45,7 @@ public class QueryNExchange {
                 command.put("relay", "false");
                 fullQueryList.addAll(selfQuery(command, resourceList));
                 for(int i = 1; i < serverList.size(); i++) {
-                    fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command));
+                    fullQueryList.addAll(otherQuery(serverList.getJSONObject(i), command, secure));
                 }
             } else {
                 fullQueryList.addAll(selfQuery(command, resourceList));
@@ -117,13 +117,18 @@ public class QueryNExchange {
      * @param command
      * @return JSONArray
      */
-    public static JSONArray otherQuery(JSONObject serverPort, JSONObject command) {
+    public static JSONArray otherQuery(JSONObject serverPort, JSONObject command, Boolean secure) {
         String server = serverPort.get("hostname").toString();
         int port = Integer.parseInt(serverPort.get("port").toString());
         String sendData = command.toString();
         JSONArray queryList;
+        String receiveData;
 
-        String receiveData = serverSend(server, port, sendData);
+        if (secure == true) {
+            receiveData = securedServerSend(server, port, sendData);
+        } else {
+            receiveData = serverSend(server, port, sendData);
+        }
         queryList = JSONArray.fromObject(receiveData);
 
         if (queryList.size() >= 3){
@@ -179,6 +184,32 @@ public class QueryNExchange {
      * @return String, the data received from other server.
      */
     public static String serverSend(String server, int port, String data) {
+        String receiveData = "";
+        try {
+            Socket connection = new Socket(server, port);
+            DataInputStream in = new DataInputStream(connection.getInputStream());
+            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+
+            out.writeUTF(data);
+            out.flush();
+
+            do {
+                receiveData += in.readUTF() + ",";
+                Thread.sleep(1000);
+            } while (in.available() > 0);
+
+            receiveData = "[" + receiveData.substring(0, receiveData.length()-1) + "]";
+            connection.close();
+
+        } catch (IOException e){
+            e.printStackTrace();
+            receiveData = "connection failed";
+        } finally {
+            return receiveData;
+        }
+    }
+
+    public static String securedServerSend(String server, int port, String data) {
         String receiveData = "";
         try {
             Socket connection = new Socket(server, port);

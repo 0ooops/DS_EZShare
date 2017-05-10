@@ -13,6 +13,9 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;
 import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
@@ -35,7 +38,8 @@ public class Server {
      */
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
-    private static JSONArray serverList = new JSONArray();
+    private static JSONArray securedServerList = new JSONArray();
+    private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
     /**
      * Default settings without command line arguments.
@@ -44,11 +48,11 @@ public class Server {
     private static int connectionSecond = 1;
     private static int exchangeSecond = 600;
     private static int port = 8080;
+    private static int securedPort = 3781;  //Default Secured Port
     private static String secret;
 
     public static void main(String[] args) {
         try{
-            boolean active = true;
             setupLogger();
             logr_info.info("Starting the EZShare Server");
             Options options = new Options();
@@ -58,6 +62,7 @@ public class Server {
             options.addOption("exchangeinterval", true, "exchange interval in seconds");
             options.addOption("port", true, "server port, an integer");
             options.addOption("secret", true, "secret, random string");
+            options.addOption("sport", true, "secured server port, an integer");
 
             // Parsing command line arguments
             CommandLineParser parser = new DefaultParser();
@@ -97,6 +102,14 @@ public class Server {
                     System.exit(1);
                 }
             }
+            if (cmd.hasOption("sport")) {
+                try {
+                    securedPort = Integer.parseInt(cmd.getOptionValue("sport"));
+                } catch (NumberFormatException e) {
+                    System.out.println("Please give a valid port number." + cmd.getOptionValue("sport"));
+                    System.exit(1);
+                }
+            }
             if (cmd.hasOption("secret")) {
                 secret = cmd.getOptionValue("secret");
             } else {
@@ -107,6 +120,7 @@ public class Server {
             logr_info.info("Using secret: " + secret);
             logr_info.info("Using advertised hostname: " + hostname);
             logr_info.info("Bound to port " + port);
+            logr_info.info("Secured port " + securedPort);
             logr_info.info("Started");
             BufferedReader br = new BufferedReader(new FileReader("./serverLog.log"));
             String sCurrentLine;
@@ -119,24 +133,75 @@ public class Server {
                 logr_debug.info("Setting debug on");
             }
 
-            // Add current host and port to serverList.
-            JSONObject localHost = new JSONObject();
-            localHost.put("hostname", getRealIp());
-            localHost.put("port", port);
-            serverList.add(localHost);
+            // Add current host and secured port to serverList.
+            JSONObject securedLocalHost = new JSONObject();
+            securedLocalHost.put("hostname", getRealIp());
+            securedLocalHost.put("port", securedPort);
+            securedServerList.add(securedLocalHost);
 
+            // Add current host and unsecured port to serverList.
+            JSONObject unsecuredLocalHost = new JSONObject();
+            unsecuredLocalHost.put("hostname", getRealIp());
+            unsecuredLocalHost.put("port", port);
+            securedServerList.add(unsecuredLocalHost);
+
+            // Create thread for periodical exchange of secured servers.
+            Thread tSecuredExchange = new Thread(() -> timingExchange(cmd, securedServerList, true));
+            tSecuredExchange.start();
+
+            // Create thread for periodical exchange of unsecured servers.
+            Thread tUnsecuredExchange = new Thread(() -> timingExchange(cmd, unsecuredServerList, false));
+            tUnsecuredExchange.start();
+
+            // Create thread for secured socket
+            Thread tSecured = new Thread(() -> securedSocket(cmd));
+            tSecured.start();
+
+            // Create thread for unsecured socket
+            Thread tUnsecured = new Thread(() -> unsecuredSocket(cmd));
+            tUnsecured.start();
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This function is used for listening on secured port and connecting with secured clients.
+     * @param cmd this is the parsed command from command line input when running server.
+     */
+    private static void securedSocket(CommandLine cmd) {
+        try {
+            SSLServerSocketFactory sslFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            SSLServerSocket sslServerSocket = (SSLServerSocket) sslFactory.createServerSocket(securedPort);
+
+            // Create thread for each secured client
+            while(true) {
+                SSLSocket sslClient = (SSLSocket) sslServerSocket.accept();
+                Thread tSecured = new Thread(() -> serveClient(sslClient, cmd, securedServerList, true));
+                tSecured.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This function is used for listening on common port and connecting with common clients.
+     * @param cmd this is the parsed command from command line input when running server.
+     */
+    private static void unsecuredSocket(CommandLine cmd) {
+        try {
             ServerSocketFactory factory = ServerSocketFactory.getDefault();
             ServerSocket server = factory.createServerSocket(port);
-            // Create thread for periodical exchange.
-            Thread tExchange = new Thread(() -> timingExchange(cmd));
-            tExchange.start();
-            // Create thread for each client.
-            while(active) {
+
+            // Create thread for each unsecured client
+            while(true) {
                 Socket client = server.accept();
-                Thread t = new Thread(() -> serveClient(client, cmd));
+                Thread t = new Thread(() -> serveClient(client, cmd, unsecuredServerList, false));
                 t.start();
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -147,7 +212,7 @@ public class Server {
      * @param client this is the socket connection with client.
      * @param args this is the parsed command from command line input when running server.
      */
-    private static void serveClient(Socket client, CommandLine args) {
+    private static void serveClient(Socket client, CommandLine args, JSONArray serverList, Boolean secure) {
         String receiveData;
         JSONObject cmd;
         JSONObject msg = null;
@@ -184,16 +249,14 @@ public class Server {
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
-                                    getRealIp(),
-                                    clientSocket.getLocalPort()));
+                                    getRealIp(), clientSocket.getLocalPort()));
                             break;
                         case "REMOVE":
                             sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
                             break;
                         case "SHARE":
                             sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
-                                    getRealIp(),
-                                    clientSocket.getLocalPort()));
+                                    getRealIp(), clientSocket.getLocalPort()));
                             break;
                         case "FETCH":
                             fileResponse = RemoveNFetch.fetch(cmd, resourceList);
@@ -204,10 +267,13 @@ public class Server {
                             }
                             break;
                         case "QUERY":
-                            sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList));
+                            sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList, secure));
                             break;
                         case "EXCHANGE":
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
+                            break;
+                        case "SUBSCRIBE":
+                            Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
                             break;
                         default:
                             msg.put("response", "error");
@@ -216,20 +282,22 @@ public class Server {
                             break;
                     }
                 }
-                logr_debug.fine("SENT: " + sendMsg.toString());
-                for (int i = 0; i < sendMsg.size(); i++) {
-                    out.writeUTF(sendMsg.getJSONObject(i).toString());
-                }
-                Thread.sleep(1000);
-                out.flush();
-                // Sending fetched file to client.
-                if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
-                    byte[] buffer = new byte[4000];
-                    while (file.read(buffer) > 0) {
-                        out.write(buffer);
+                if (cmd.containsKey("command") && !cmd.get("command").toString().equals("SUBSCRIBE")) {
+                    logr_debug.fine("SENT: " + sendMsg.toString());
+                    for (int i = 0; i < sendMsg.size(); i++) {
+                        out.writeUTF(sendMsg.getJSONObject(i).toString());
                     }
+                    Thread.sleep(1000);
                     out.flush();
-                    file.close();
+                    // Sending fetched file to client.
+                    if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
+                        byte[] buffer = new byte[4000];
+                        while (file.read(buffer) > 0) {
+                            out.write(buffer);
+                        }
+                        out.flush();
+                        file.close();
+                    }
                 }
             } while(in.available() > 0);
             out.close();
@@ -280,7 +348,7 @@ public class Server {
      * This function is used for periodically exchanging serverList with a random selected server on serverList.
      * @param args this is the parsed command from command line input when running server.
      */
-    public static void timingExchange (CommandLine args) {
+    public static void timingExchange (CommandLine args, JSONArray serverList, Boolean secure) {
         String receiveData;
         try {
             while (true) {
@@ -293,7 +361,11 @@ public class Server {
                     cmd.put("serverList", serverList);
                     logr_debug.fine("Auto-exchange is working in every " + exchangeSecond + " seconds.");
                     logr_debug.fine("SENT: " + cmd.toString());
-                    receiveData = QueryNExchange.serverSend(host, exchangePort, cmd.toString());
+                    if (secure == true) {
+                        receiveData = QueryNExchange.securedServerSend(host, exchangePort, cmd.toString());
+                    } else {
+                        receiveData = QueryNExchange.serverSend(host, exchangePort, cmd.toString());
+                    }
                     logr_debug.fine("RECEIVED: " + receiveData);
                     logr_debug.fine("Auto-exchange is finished.");
                     if (receiveData.equals("connection failed")) {
@@ -310,7 +382,6 @@ public class Server {
                 }
                 Thread.sleep(exchangeSecond * 1000);
             }
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {

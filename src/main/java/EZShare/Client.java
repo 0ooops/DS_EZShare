@@ -8,17 +8,12 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
-
 import java.util.HashSet;
 import java.util.Set;
-
 import java.util.logging.*;
-
 import net.sf.json.*;
-
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
