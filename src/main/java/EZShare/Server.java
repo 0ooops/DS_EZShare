@@ -119,8 +119,8 @@ public class Server {
             // Print logfile info when starting
             logr_info.info("Using secret: " + secret);
             logr_info.info("Using advertised hostname: " + hostname);
-            logr_info.info("Bound to port " + port);
-            logr_info.info("Secured port " + securedPort);
+            logr_info.info("Bound to normal port " + port);
+            logr_info.info("Bound to secured port " + securedPort);
             logr_info.info("Started");
             BufferedReader br = new BufferedReader(new FileReader("./serverLog.log"));
             String sCurrentLine;
@@ -172,6 +172,10 @@ public class Server {
      */
     private static void securedSocket(CommandLine cmd) {
         try {
+            System.setProperty("javax.net.ssl.keyStore","serverKeyStore/keystore.jks");
+            System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
+            System.setProperty("javax.net.debug","all");
+
             SSLServerSocketFactory sslFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             SSLServerSocket sslServerSocket = (SSLServerSocket) sslFactory.createServerSocket(securedPort);
 
