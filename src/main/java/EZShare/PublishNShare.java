@@ -27,8 +27,9 @@ public class PublishNShare {
      * @param port
      * port of the server
      */
-    public synchronized static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
-                                     String address, int port) {
+    public synchronized static JSONObject publish(JSONObject obj, HashMap<Integer, Resource> resourceList,
+                                                  KeyList keys, ArrayList<Resource> resQueue,
+                                                  String address, int port) {
         //json object contains command respond
         //JSONArray r = new JSONArray();
         JSONObject response = new JSONObject();
@@ -63,6 +64,7 @@ public class PublishNShare {
                     if (index != -1) {
                         //resourceList.remove(index);
                         resourceList.put(index, res);
+                        resQueue.add(res);
                         response.put("response", "success");
                     } else {
                         response.put("response", "error");
@@ -97,7 +99,8 @@ public class PublishNShare {
      * @param port
      * port of the server
      */
-    public synchronized static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys, String secret,
+    public synchronized static JSONObject share(JSONObject obj, HashMap<Integer, Resource> resourceList, KeyList keys,
+                                                ArrayList<Resource> resQueue, String secret,
                                    String address, int port) {
         //json object contains command respond
         JSONObject response = new JSONObject();
@@ -136,6 +139,7 @@ public class PublishNShare {
                              */
                             if (index != -1) {
                                 resourceList.put(index, res);
+                                resQueue.add(res);
                                 response.put("response", "success");
                             } else {
                                 response.put("response", "error");

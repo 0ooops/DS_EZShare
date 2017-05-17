@@ -19,9 +19,7 @@ import javax.net.ssl.SSLSocket;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -41,6 +39,8 @@ public class Server {
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
+    private static ArrayList<Resource> resourceQueue = new ArrayList<>();
+
     /**
      * Default settings without command line arguments.
      */
@@ -248,14 +248,14 @@ public class Server {
                 } else {
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
-                            sendMsg.add(PublishNShare.publish(cmd, resourceList, keys,
+                            sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, resourceQueue,
                                     getRealIp(), clientSocket.getLocalPort()));
                             break;
                         case "REMOVE":
                             sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
                             break;
                         case "SHARE":
-                            sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
+                            sendMsg.add(PublishNShare.share(cmd, resourceList, keys, resourceQueue, secret,
                                     getRealIp(), clientSocket.getLocalPort()));
                             break;
                         case "FETCH":
@@ -273,7 +273,11 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
                             break;
                         case "SUBSCRIBE":
-                            Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                            JSONObject m = Subscribe.init(cmd);
+                            sendMsg.add(m);
+                            if(m.get("response").equals("success")) {
+                                Subscribe.subscribe(cmd, clientSocket, resourceList, resourceQueue, secure, logr_debug);
+                            }
                             break;
                         default:
                             msg.put("response", "error");
