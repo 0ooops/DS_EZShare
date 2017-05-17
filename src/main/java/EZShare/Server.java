@@ -172,7 +172,7 @@ public class Server {
      */
     private static void securedSocket(CommandLine cmd) {
         try {
-            System.setProperty("javax.net.ssl.keyStore","serverKeyStore/keystore.jks");
+            System.setProperty("javax.net.ssl.keyStore","serverKeyStore/server-keystore.jks");
             System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
             System.setProperty("javax.net.debug","all");
 
