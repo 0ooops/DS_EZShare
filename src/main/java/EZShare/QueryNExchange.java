@@ -8,6 +8,11 @@ package EZShare;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -212,7 +217,12 @@ public class QueryNExchange {
     public static String securedServerSend(String server, int port, String data) {
         String receiveData = "";
         try {
-            Socket connection = new Socket(server, port);
+            System.setProperty("javax.net.ssl.keyStore", "serverKeyStore/server-keystore.jks");
+            System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
+            System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
+            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            SSLSocket connection = (SSLSocket) sslsocketfactory.createSocket(server, port);
+
             DataInputStream in = new DataInputStream(connection.getInputStream());
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 

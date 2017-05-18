@@ -12,6 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
 import net.sf.json.*;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
@@ -32,6 +35,7 @@ public class Client {
     private static String uri = "";
     private static String ezserver = null;
     private static String relay = "false";
+    private static Boolean secure = false;
     /**
      * all valid commands.
      */
@@ -65,6 +69,7 @@ public class Client {
         options.addOption("tags", true, "resource tags, tag1,tag2,tag3,...");
         options.addOption("uri", true, "resource URI");
         options.addOption("relay", true, "whether query from other servers");
+        options.addOption("secure", false, "whether to use a secured connection");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -103,6 +108,14 @@ public class Client {
                 return;
             }
         }
+
+/**
+ * check if port number is valid
+ */
+        if (cmd.hasOption("secure")) {
+            secure = true;
+        }
+
 /**
  * setup log
  */
@@ -341,8 +354,15 @@ public class Client {
         String receiveData = "";
         boolean fetchSuccess = false;
         Socket connection;
+
         try {
-            connection = new Socket(host, port);
+            if (secure) {
+                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+                SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                connection = sslsocketfactory.createSocket(host, port);
+            } else {
+                connection = new Socket(host, port);
+            }
             DataInputStream in = new DataInputStream(connection.getInputStream());
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
             out.writeUTF(sendData);

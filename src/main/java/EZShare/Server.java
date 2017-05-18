@@ -143,7 +143,7 @@ public class Server {
             JSONObject unsecuredLocalHost = new JSONObject();
             unsecuredLocalHost.put("hostname", getRealIp());
             unsecuredLocalHost.put("port", port);
-            securedServerList.add(unsecuredLocalHost);
+            unsecuredServerList.add(unsecuredLocalHost);
 
             // Create thread for periodical exchange of secured servers.
             Thread tSecuredExchange = new Thread(() -> timingExchange(cmd, securedServerList, true));
@@ -173,15 +173,16 @@ public class Server {
     private static void securedSocket(CommandLine cmd) {
         try {
             System.setProperty("javax.net.ssl.keyStore","serverKeyStore/server-keystore.jks");
+            System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
             System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
-            System.setProperty("javax.net.debug","all");
+//            System.setProperty("javax.net.debug","all");
 
             SSLServerSocketFactory sslFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             SSLServerSocket sslServerSocket = (SSLServerSocket) sslFactory.createServerSocket(securedPort);
 
             // Create thread for each secured client
             while(true) {
-                SSLSocket sslClient = (SSLSocket) sslServerSocket.accept();
+                SSLSocket sslClient = (SSLSocket)sslServerSocket.accept();
                 Thread tSecured = new Thread(() -> serveClient(sslClient, cmd, securedServerList, true));
                 tSecured.start();
             }
@@ -369,7 +370,7 @@ public class Server {
                     cmd.put("serverList", serverList);
                     logr_debug.fine("Auto-exchange is working in every " + exchangeSecond + " seconds.");
                     logr_debug.fine("SENT: " + cmd.toString());
-                    if (secure == true) {
+                    if (secure) {
                         receiveData = QueryNExchange.securedServerSend(host, exchangePort, cmd.toString());
                     } else {
                         receiveData = QueryNExchange.serverSend(host, exchangePort, cmd.toString());
