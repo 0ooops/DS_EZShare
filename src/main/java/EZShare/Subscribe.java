@@ -10,7 +10,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -53,13 +52,9 @@ public class Subscribe {
     }
 
     public static void subscribe (JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
-                                  ArrayList<Resource> resQueue, Boolean secure,
-                                  Logger logr_debug) throws IOException {
+                                  Boolean secure, Logger logr_debug) throws IOException {
         if(!relay) {
-            while (!resQueue.isEmpty()) {
-                System.out.println(selfSubscribe(resQueue.get(0)));
-                resQueue.remove(0);
-            }
+            //System.out.println(selfSubscribe());
         }
 
     }

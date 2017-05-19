@@ -39,7 +39,6 @@ public class Server {
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
-    private static ArrayList<Resource> resourceQueue = new ArrayList<>();
 
     /**
      * Default settings without command line arguments.
@@ -253,14 +252,14 @@ public class Server {
                 } else {
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
-                            sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, resourceQueue,
-                                    getRealIp(), clientSocket.getLocalPort()));
+                            sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),
+                                    clientSocket.getLocalPort()));
                             break;
                         case "REMOVE":
                             sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
                             break;
                         case "SHARE":
-                            sendMsg.add(PublishNShare.share(cmd, resourceList, keys, resourceQueue, secret,
+                            sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
                                     getRealIp(), clientSocket.getLocalPort()));
                             break;
                         case "FETCH":
@@ -281,7 +280,7 @@ public class Server {
                             JSONObject m = Subscribe.init(cmd);
                             sendMsg.add(m);
                             if(m.get("response").equals("success")) {
-                                Subscribe.subscribe(cmd, clientSocket, resourceList, resourceQueue, secure, logr_debug);
+                                Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
                             }
                             break;
                         default:
