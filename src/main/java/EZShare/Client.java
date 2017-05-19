@@ -45,6 +45,7 @@ public class Client {
     private static final String QUERY = "-query";
     private static final String FETCH = "-fetch";
     private static final String EXCHANGE = "-exchange";
+    private static final String SUBSCRIBE = "-subscribe";
 
     public static void main(String[] args) {
         /**
@@ -62,6 +63,7 @@ public class Client {
         options.addOption("port", true, "server port, an integer");
         options.addOption("publish", false, "publish source on server");
         options.addOption("query", false, "query for resources from server");
+        options.addOption("subscribe", false, "subscribe to server");
         options.addOption("remove", false, "remove resources from server");
         options.addOption("secret", true, "secret");
         options.addOption("servers", true, "server list, host1:port1, host2, port2,...");
@@ -169,6 +171,10 @@ public class Client {
                     JSONObject sendQuery = queryCommand(cmd);
                     sendMessage(command, sendQuery, cmd);
                     break;
+                case SUBSCRIBE:
+                    JSONObject sendSubscribe = subscribeCommand(cmd);
+                    sendMessage(command, sendSubscribe, cmd);
+                    break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
                     sendMessage(command, sendFetch, cmd);
@@ -271,6 +277,22 @@ public class Client {
         query.put("relay", relay);
         logr.fine("querying from " + host + ":" + port);
         return query;
+    }
+
+    /**
+     * dealing with subscribe command
+     *
+     * @param cmd commands
+     * @return the JSONObject message to be sent to the server
+     */
+    static int subCounter = 0;
+    private static JSONObject subscribeCommand(CommandLine cmd) {
+        JSONObject subscribe = queryCommand(cmd);
+        subscribe.put("command", "SUBSCRIBE");
+        subscribe.put("id", subCounter);
+        subCounter++;
+        logr.fine("subscribing from " + host + ":" + port);
+        return subscribe;
     }
 
     /**
@@ -514,6 +536,7 @@ public class Client {
         commandSet.add(REMOVE);
         commandSet.add(SHARE);
         commandSet.add(QUERY);
+        commandSet.add(SUBSCRIBE);
         commandSet.add(FETCH);
         commandSet.add(EXCHANGE);
         for (String arg : args) {

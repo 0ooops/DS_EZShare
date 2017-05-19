@@ -24,6 +24,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+
+import static java.lang.Thread.sleep;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -36,6 +38,8 @@ public class Server {
      */
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
+    //private static HashMap<String, HashMap<Integer, String>> subList = new HashMap<>();
+    private static HashMap<Socket, HashMap<Integer, JSONObject>> subList = new HashMap<>();
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
@@ -227,13 +231,15 @@ public class Server {
         try(Socket clientSocket = client) {
             // Check connection interval limit, if less than lower requirement, close the connection with processing.
             String getAddress = clientSocket.getInetAddress().getHostAddress();
-            logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been established.");
+            logr_debug.fine("The connection with " + getAddress + ":" +
+                    clientSocket.getPort() + " has been established.");
             Long time = date.getTime();
             if (clientList.containsKey(getAddress)) {
                 if (time - clientList.get(getAddress) < connectionSecond * 1000) {
                     logr_debug.fine("The request from host " + getAddress + " is too frequent.");
                     clientSocket.close();
-                    logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been closed by server.");
+                    logr_debug.fine("The connection with " + getAddress + ":" +
+                            clientSocket.getPort() + " has been closed by server.");
                 }
             }
             clientList.put(getAddress, time);
@@ -277,10 +283,22 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
                             break;
                         case "SUBSCRIBE":
-                            JSONObject m = Subscribe.init(cmd);
-                            sendMsg.add(m);
+                            JSONObject m = Subscribe.init(cmd, clientSocket);
                             if(m.get("response").equals("success")) {
-                                Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                                Integer key = (Integer) m.get("key");
+                                JSONObject resTemp = (JSONObject) m.get("resourceTemplate");
+                                //subList.put(clientSocket.getLocalAddress().toString(), new HashMap<>());
+                                //subList.get(clientSocket.getLocalAddress().toString()).
+                                //        put(clientSocket.getLocalPort(), key);
+
+                                subList.put(clientSocket, new HashMap<>());
+                                subList.get(clientSocket).put(key, resTemp);
+                                System.out.println("sub num: " + subList.size());
+                                //Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                                while(true) {
+                                    sleep(2000);
+                                    System.out.println("abc");
+                                }
                             }
                             break;
                         default:
@@ -295,10 +313,11 @@ public class Server {
                     for (int i = 0; i < sendMsg.size(); i++) {
                         out.writeUTF(sendMsg.getJSONObject(i).toString());
                     }
-                    Thread.sleep(1000);
+                    sleep(1000);
                     out.flush();
                     // Sending fetched file to client.
-                    if (cmd.get("command").toString().equals("FETCH") && fileResponse.getJSONObject(0).get("response").equals("success")) {
+                    if (cmd.get("command").toString().equals("FETCH") &&
+                            fileResponse.getJSONObject(0).get("response").equals("success")) {
                         byte[] buffer = new byte[4000];
                         while (file.read(buffer) > 0) {
                             out.write(buffer);
@@ -310,9 +329,11 @@ public class Server {
             } while(in.available() > 0);
             out.close();
             clientSocket.close();
-            logr_debug.fine("The connection with " + getAddress + ":" + clientSocket.getPort() + " has been closed.");
+            logr_debug.fine("The connection with " + getAddress + ":" +
+                    clientSocket.getPort() + " has been closed.");
             if (args.hasOption("debug")) {
-                BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
+                BufferedReader brDebug = new BufferedReader(
+                        new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                 String dCurrentLine;
                 while ((dCurrentLine = brDebug.readLine()) != null) {
                     System.out.println(dCurrentLine);
@@ -380,7 +401,8 @@ public class Server {
                         serverList.remove(select);
                     }
                     if (args.hasOption("debug")) {
-                        BufferedReader brDebug = new BufferedReader(new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
+                        BufferedReader brDebug = new BufferedReader(
+                                new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                         String dCurrentLine;
                         while ((dCurrentLine = brDebug.readLine()) != null) {
                             System.out.println(dCurrentLine);
@@ -388,7 +410,7 @@ public class Server {
                         setupDebug();
                     }
                 }
-                Thread.sleep(exchangeSecond * 1000);
+                sleep(exchangeSecond * 1000);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
