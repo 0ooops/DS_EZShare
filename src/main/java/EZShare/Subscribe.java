@@ -11,6 +11,7 @@ import net.sf.json.JSONObject;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -66,11 +67,34 @@ public class Subscribe {
                                   Boolean secure, Logger logr_debug) throws IOException, InterruptedException {
         //DataInputStream in = new DataInputStream(clientSocket.getInputStream());
         //System.out.println("abc");
+        JSONArray sendMsg = new JSONArray();
         if(!relay) {
             //System.out.println(selfSubscribe());
+            System.out.println("abc");
+            resTempList.add((JSONObject) cmd.get("resourceTemplate"));
+            for(Resource src:resourceList.values()) {
+                sendMsg.add(selfSubscribe(src));
+                System.out.println("aaa");
+            }
+            send(clientSocket, logr_debug, sendMsg);
+            System.out.println("cde");
+            while(clientSocket.isConnected()) {
+
+            }
 
         }
 
+    }
+
+    public static void send(Socket clientSocket, Logger logr_debug, JSONArray sendMsg)
+            throws IOException, InterruptedException {
+        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+        logr_debug.fine("SENT: " + sendMsg.toString());
+        for (int i = 0; i < sendMsg.size(); i++) {
+            out.writeUTF(sendMsg.getJSONObject(i).toString());
+        }
+        sleep(1000);
+        out.flush();
     }
 
     public static JSONObject selfSubscribe (Resource src) {

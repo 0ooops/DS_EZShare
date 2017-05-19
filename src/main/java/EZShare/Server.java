@@ -294,10 +294,11 @@ public class Server {
                                 subList.put(clientSocket, new HashMap<>());
                                 subList.get(clientSocket).put(id, resTemp);
                                 System.out.println("sub num: " + subList.size());
-                                //Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                                Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                                /*
                                 while(clientSocket.isConnected()) {
                                     sleep(2000);
-                                    /*
+
                                     System.out.println(in.available());
                                     if(in.available() > 0) {
                                         String receiveUnsubData = in.readUTF();
@@ -311,8 +312,8 @@ public class Server {
                                             break;
                                         }
                                     }
-                                    */
-                                }
+
+                                }*/
                             }
                             break;
                         case "UNSUBSCRIBE":
