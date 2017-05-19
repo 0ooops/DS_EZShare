@@ -36,6 +36,7 @@ public class Client {
     private static String ezserver = null;
     private static String relay = "false";
     private static Boolean secure = false;
+    private static int id = 0;
     /**
      * all valid commands.
      */
@@ -46,6 +47,7 @@ public class Client {
     private static final String FETCH = "-fetch";
     private static final String EXCHANGE = "-exchange";
     private static final String SUBSCRIBE = "-subscribe";
+    private static final String UNSUBSCRIBE = "-unsubscribe";
 
     public static void main(String[] args) {
         /**
@@ -64,6 +66,7 @@ public class Client {
         options.addOption("publish", false, "publish source on server");
         options.addOption("query", false, "query for resources from server");
         options.addOption("subscribe", false, "subscribe to server");
+        options.addOption("unsubscribe", false, "unsubscribe to server");
         options.addOption("remove", false, "remove resources from server");
         options.addOption("secret", true, "secret");
         options.addOption("servers", true, "server list, host1:port1, host2, port2,...");
@@ -71,6 +74,7 @@ public class Client {
         options.addOption("tags", true, "resource tags, tag1,tag2,tag3,...");
         options.addOption("uri", true, "resource URI");
         options.addOption("relay", true, "whether query from other servers");
+        options.addOption("id", true, "subscription id");
         options.addOption("secure", false, "whether to use a secured connection");
 
         CommandLineParser parser = new DefaultParser();
@@ -173,8 +177,14 @@ public class Client {
                     break;
                 case SUBSCRIBE:
                     JSONObject sendSubscribe = subscribeCommand(cmd);
-                    sendMessage(command, sendSubscribe, cmd);
+                    sendSubMessage(command, sendSubscribe, cmd);
                     break;
+                    /*
+                case UNSUBSCRIBE:
+                    JSONObject sendUnsubscribe = unsubscribeCommand();
+                    sendMessage(command, sendUnsubscribe, cmd);
+                    break;
+                    */
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
                     sendMessage(command, sendFetch, cmd);
@@ -285,14 +295,26 @@ public class Client {
      * @param cmd commands
      * @return the JSONObject message to be sent to the server
      */
-    static int subCounter = 0;
     private static JSONObject subscribeCommand(CommandLine cmd) {
         JSONObject subscribe = queryCommand(cmd);
+        id = Integer.parseInt(cmd.getOptionValue("id"));
         subscribe.put("command", "SUBSCRIBE");
-        subscribe.put("id", subCounter);
-        subCounter++;
+        subscribe.put("id", id);
         logr.fine("subscribing from " + host + ":" + port);
         return subscribe;
+    }
+
+    /**
+     * dealing with unsubscribe command
+     *
+     * @return the JSONObject message to be sent to the server
+     */
+    private static JSONObject unsubscribeCommand() {
+        JSONObject unsubscribe = new JSONObject();
+        unsubscribe.put("command", "UNSUBSCRIBE");
+        unsubscribe.put("id", id);
+        logr.fine("unsubscribing from " + host + ":" + port);
+        return unsubscribe;
     }
 
     /**
@@ -507,6 +529,138 @@ public class Client {
     }
 
     /**
+     * subscribing and maintaining connection
+     *
+     * @param sendJson json object to be sent.
+     * @param cmd      cmd may specify another server host and port number.
+     */
+    private static void sendSubMessage(String command, JSONObject sendJson, CommandLine cmd) {
+        String sendData = sendJson.toString();
+        String receiveData = "";
+        boolean unsub = false;
+        Socket connection;
+        int resultSize = 0;
+
+        try {
+            if (secure) {
+                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+                SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                connection = sslsocketfactory.createSocket(host, port);
+            } else {
+                connection = new Socket(host, port);
+            }
+            DataInputStream in = new DataInputStream(connection.getInputStream());
+            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+            InputStreamReader reader = new InputStreamReader(System.in);
+            BufferedReader buffer = new BufferedReader(reader);
+            out.writeUTF(sendData);
+            out.flush();
+            logr.fine("SENT:" + sendData);
+            try {
+                connection.setSoTimeout(20 * 1000);
+            } catch (Exception e) {
+                System.out.println("The client side terminates the connection as the server does not response anything");
+                System.exit(1);
+            }
+
+            while(!unsub) {
+                Thread.sleep(2000);
+                while (in.available() > 0) {
+                    Thread.sleep(1000);
+                    String read = in.readUTF();
+                    logr.fine("RECEIVED:" + read);
+                    receiveData += read + ",";
+                }
+
+                if (!receiveData.equals("")) {
+                    if (cmd.hasOption("debug")) {
+                        //print logfile
+                        BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
+                        String sCurrentLine;
+                        while ((sCurrentLine = br.readLine()) != null) {
+                            System.out.println(sCurrentLine);
+                        }
+                    } else {
+                        //print out
+                        receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+                        JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+
+                        JSONObject resp = recv.getJSONObject(0);
+                        String respTpye = (String) resp.get("response");
+                        if (respTpye.equals("error")) {
+                            System.out.print("error,");
+                            System.out.println(resp.get("errorMessage") + "!");
+                        } else {
+                            System.out.println("success!");
+                        }
+                        if (!respTpye.equals("error")) {
+                            for (int i = 1; i < recv.size() - 1; i++) {
+                                JSONObject queryList = recv.getJSONObject(i);
+                                String qName = (String) queryList.get("name");
+                                String qUri = (String) queryList.get("uri");
+                                JSONArray qTags = (JSONArray) queryList.get("tags");
+                                String qEzserver = (String) queryList.get("ezserver");
+                                String qChannel = (String) queryList.get("channel");
+                                System.out.println("name: " + qName);
+                                System.out.println("tags: " + qTags.toString());
+                                System.out.println("uri: " + qUri);
+                                System.out.println("channel: " + qChannel);
+                                System.out.println("ezserver: " + qEzserver);
+                                System.out.println();
+                            }
+                            System.out.println();
+                            resultSize += (recv.size() - 2) > 0 ? (recv.size() - 2) : 0;
+                        }
+                    }
+                }
+                receiveData = "";
+                if (buffer.ready()) {
+                    if (buffer.read() == '\n') {
+                        String unsubMsg = unsubscribeCommand().toString();
+
+                        out.writeUTF(unsubMsg);
+                        out.flush();
+
+                        logr.fine("SENT:" + unsubMsg);
+
+                        do {
+                            Thread.sleep(1000);
+                            String read = in.readUTF();
+                            logr.fine("RECEIVED:" + read);
+                            receiveData += read + ",";
+                        } while (in.available() > 0);
+
+                        if (cmd.hasOption("debug")) {
+                                //print logfile
+                                BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
+                                String sCurrentLine;
+                                while ((sCurrentLine = br.readLine()) != null) {
+                                    System.out.println(sCurrentLine);
+                                }
+                        } else {
+                            //print out
+                            receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+                            JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                            System.out.println();
+                            resultSize += (recv.size() - 2) > 0 ? (recv.size() - 2) : 0;
+
+                        }
+                        unsub = true;
+                    }
+                }
+            }
+            in.close();
+            out.close();
+            connection.close();
+        } catch (InterruptedException e) {
+            System.out.println("bad things always happen,pls try again.");
+        } catch (IOException e) {
+            System.out.println("connection fail:" + e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    /**
      * setup log file.
      */
     private static void setupLogger() {
@@ -537,6 +691,7 @@ public class Client {
         commandSet.add(SHARE);
         commandSet.add(QUERY);
         commandSet.add(SUBSCRIBE);
+        commandSet.add(UNSUBSCRIBE);
         commandSet.add(FETCH);
         commandSet.add(EXCHANGE);
         for (String arg : args) {

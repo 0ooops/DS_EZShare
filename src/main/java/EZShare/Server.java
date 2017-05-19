@@ -285,21 +285,41 @@ public class Server {
                         case "SUBSCRIBE":
                             JSONObject m = Subscribe.init(cmd, clientSocket);
                             if(m.get("response").equals("success")) {
-                                Integer key = (Integer) m.get("key");
+                                Integer id = (Integer) m.get("id");
                                 JSONObject resTemp = (JSONObject) m.get("resourceTemplate");
                                 //subList.put(clientSocket.getLocalAddress().toString(), new HashMap<>());
                                 //subList.get(clientSocket.getLocalAddress().toString()).
                                 //        put(clientSocket.getLocalPort(), key);
 
                                 subList.put(clientSocket, new HashMap<>());
-                                subList.get(clientSocket).put(key, resTemp);
+                                subList.get(clientSocket).put(id, resTemp);
                                 System.out.println("sub num: " + subList.size());
                                 //Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
-                                while(true) {
+                                while(clientSocket.isConnected()) {
                                     sleep(2000);
-                                    System.out.println("abc");
+                                    /*
+                                    System.out.println(in.available());
+                                    if(in.available() > 0) {
+                                        String receiveUnsubData = in.readUTF();
+                                        logr_debug.fine("RECEIVED: " + receiveUnsubData);
+                                        if(JSONObject.fromObject(receiveUnsubData).
+                                                get("command").equals("UNSUBSCRIBE")) {
+                                            JSONObject unsubmsg = new JSONObject();
+                                            unsubmsg.put("response", "end subscription");
+                                            unsubmsg.put("id", cmd.get("id"));
+                                            sendMsg.add(unsubmsg);
+                                            break;
+                                        }
+                                    }
+                                    */
                                 }
                             }
+                            break;
+                        case "UNSUBSCRIBE":
+                            JSONObject unsubmsg = new JSONObject();
+                            unsubmsg.put("response", "end subscription");
+                            unsubmsg.put("id", cmd.get("id"));
+                            sendMsg.add(unsubmsg);
                             break;
                         default:
                             msg.put("response", "error");
