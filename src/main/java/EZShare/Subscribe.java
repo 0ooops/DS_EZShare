@@ -2,7 +2,6 @@ package EZShare;
 
 /**
  * This class is used for subscribing and unsubscribing functions on EZShare System.
- *
  * @author: Jiacheng Chen
  * @date: May, 2017
  */
@@ -28,12 +27,15 @@ public class Subscribe {
 
     /**
      * Initiate the subscription
-     *
-     * @param cmd JSON command
+     * @param cmd
+     * JSON command
      * @return the response
+     * @throws IOException
      */
-    public static JSONObject init(JSONObject cmd, DataOutputStream out) throws IOException, InterruptedException {
+    public static JSONObject init(JSONObject cmd, Socket clientSocket) throws IOException, InterruptedException {
         JSONObject response = new JSONObject();
+
+        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         //must contain resource template
         if (cmd.containsKey("resourceTemplate")) {
             //must contain an id
@@ -41,7 +43,7 @@ public class Subscribe {
                 response.put("response", "success");
                 response.put("id", cmd.get("id"));
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
-                if (cmd.containsKey("relay")) {
+                if(cmd.containsKey("relay")) {
                     if (cmd.get("relay").equals("true")) {
                         relay = true;
                     }
@@ -57,64 +59,50 @@ public class Subscribe {
         out.writeUTF(response.toString());
         sleep(1000);
         out.flush();
+        out.close();
         return response;
     }
 
-    public static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
-                                 Boolean secure, Logger logr_debug) {
-        int count = 0;
-        boolean flag = true;
-        try {
-            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-            JSONArray sendMsg = new JSONArray();
-            if (!relay) {
-                //System.out.println(selfSubscribe());
-                resTempList.add((JSONObject) cmd.get("resourceTemplate"));
-                for (Resource src : resourceList.values()) {
+    public static void subscribe (JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
+                                  Boolean secure, Logger logr_debug) throws IOException, InterruptedException {
+        //DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+        //System.out.println("abc");
+        JSONArray sendMsg = new JSONArray();
+        if(!relay) {
+            //System.out.println(selfSubscribe());
+            System.out.println("abc");
+            resTempList.add((JSONObject) cmd.get("resourceTemplate"));
+            for(Resource src:resourceList.values()) {
+                JSONObject m = selfSubscribe(src);
+                if (!m.equals(null)) {
                     sendMsg.add(selfSubscribe(src));
-                    count++;
-                }
-                send(out, logr_debug, sendMsg);
-
-                while (flag) {
-                    if (in.available() > 0) {
-                        String recv = in.readUTF();
-                        System.out.println(recv);
-                        if (recv.contains("UNSUBSCRIBE")) {
-                            JSONObject unsubmsg = new JSONObject();
-                            unsubmsg.put("resultSize", count);
-                            sendMsg.clear();
-                            sendMsg.add(unsubmsg);
-                            send(out, logr_debug, sendMsg);
-                            flag = false;
-                        }
-                    }
+                    System.out.println("aaa");
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            send(clientSocket, logr_debug, sendMsg);
+            System.out.println("cde");
+            while(clientSocket.isConnected()) {
+
+            }
+
         }
+
     }
 
-    private static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
-//        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+    public static void send(Socket clientSocket, Logger logr_debug, JSONArray sendMsg)
+            throws IOException, InterruptedException {
+        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         logr_debug.fine("SENT: " + sendMsg.toString());
-        System.out.println(sendMsg.toString());
-        try {
-            for (int i = 0; i < sendMsg.size(); i++) {
-                out.writeUTF(sendMsg.getJSONObject(i).toString());
-            }
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = 0; i < sendMsg.size(); i++) {
+            out.writeUTF(sendMsg.getJSONObject(i).toString());
         }
-
+        sleep(1000);
+        out.flush();
     }
 
-    public static JSONObject selfSubscribe(Resource src) {
+    public static JSONObject selfSubscribe (Resource src) {
 
-        for (JSONObject resTemp : resTempList) {
+        for(JSONObject resTemp : resTempList) {
             JSONArray cmdTagsJson = resTemp.getJSONArray("tags");
             String[] cmdTags = cmdTagsJson.toString().substring(1,
                     cmdTagsJson.toString().length() - 1).split(",");
@@ -134,7 +122,7 @@ public class Subscribe {
                 owner = false;
             }
             if (cmdTags.length != 0 && !cmdTags[0].equals("")) {
-                for (int j = 0; j < cmdTags.length; j++) {
+                for(int j = 0; j < cmdTags.length; j++) {
                     if (!src.getTags().contains(cmdTags[j])) {
                         tags = false;
                     }
@@ -155,12 +143,13 @@ public class Subscribe {
             if (channel && owner && tags && uri && (name || description || nameDescription)) {
                 src.setOwner("*");
             }
+            return src.toJSON();
         }
 
-        return src.toJSON();
+        return null;
     }
 
-    public static void otherSubscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource>
+    public static void otherSubscribe (JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource>
             resourceList, Boolean secure, Logger logr_debug) {
 
     }
