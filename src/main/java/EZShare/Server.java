@@ -38,7 +38,6 @@ public class Server {
      */
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
-    //private static HashMap<String, HashMap<Integer, String>> subList = new HashMap<>();
     private static HashMap<Socket, HashMap<String, ArrayList<JSONObject>>> subList = new HashMap<>();
     private static HashMap<Socket, Integer> subCounterList = new HashMap<>();
     private static JSONArray securedServerList = new JSONArray();
@@ -289,7 +288,7 @@ public class Server {
                                 ifDebug = true;
                             }
                             Subscribe.init(cmd, clientSocket, resourceList, secure,
-                                    logr_debug, getRealIp(), port, ifDebug);
+                                    logr_debug, getRealIp(), port, ifDebug, serverList);
                             subList.remove(clientSocket);
                             subCounterList.remove(clientSocket);
                             //System.out.println("sub num after: " + subList.size());
