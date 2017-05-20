@@ -322,11 +322,11 @@ public class Server {
 //                            unsubmsg.put("id", cmd.get("id"));
 //                            sendMsg.add(unsubmsg);
 //                            break;
-                        default:
-                            msg.put("response", "error");
-                            msg.put("errorMessage", "invalid command");
-                            sendMsg.add(msg);
-                            break;
+//                        default:
+//                            msg.put("response", "error");
+//                            msg.put("errorMessage", "invalid command");
+//                            sendMsg.add(msg);
+//                            break;
                     }
                 }
                 if (cmd.containsKey("command") && !cmd.get("command").toString().equals("SUBSCRIBE")) {

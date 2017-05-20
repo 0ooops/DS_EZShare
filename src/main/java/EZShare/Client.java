@@ -564,21 +564,18 @@ public class Client {
                         receiveData = "";
                         recv.clear();
                         System.out.println("press any key to continue, press ENTER to unsubscribe");
-                        if (enterRead.read() == '\n')  {
-                            //TODO:unSubscribe!!!
-                            out.writeUTF(unsubscribeCommand().toString());
-                            unSubscribe = true;
-
-                        }else {
-                            enterRead.readLine();
-                        }
                     }
                 }
-
+                if (enterRead.ready())  {
+                    if (enterRead.read() == '\n'){
+                        out.writeUTF(unsubscribeCommand().toString());
+                        unSubscribe = true;
+                    }
+                }
             }
             if (unSubscribe){
                 do {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                     String read = in.readUTF();
 //                    System.out.println(read);
                     receiveData += read + ",";

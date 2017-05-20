@@ -83,7 +83,6 @@ public class Subscribe {
                         unsubmsg.put("resultSize", count);
                         sendMsg.clear();
                         sendMsg.add(unsubmsg);
-                        System.out.println(sendMsg);
                         send(out, logr_debug, sendMsg);
                         flag=false;
                     }
