@@ -63,8 +63,8 @@ public class Subscribe {
     public static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                                  Boolean secure, Logger logr_debug) {
         int count = 0;
+        boolean flag = true;
         try {
-
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             JSONArray sendMsg = new JSONArray();
@@ -77,7 +77,6 @@ public class Subscribe {
                 }
                 send(out, logr_debug, sendMsg);
 
-                boolean flag = true;
                 while (flag) {
                     if (in.available() > 0) {
                         JSONObject unsubmsg = new JSONObject();
