@@ -10,10 +10,7 @@ package EZShare;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,9 +26,10 @@ public class Subscribe {
      * @param cmd JSON command
      * @return the response
      */
-    public static void init(JSONObject cmd, DataOutputStream out, Socket clientSocket,
-                                  HashMap<Integer, Resource> resourceList, boolean secure, Logger logr_debug)
+    public static void init(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
+                            boolean secure, Logger logr_debug, String ip, int port, boolean debug)
             throws IOException, InterruptedException {
+        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         JSONObject response = new JSONObject();
         ArrayList<JSONObject> resTempList = new ArrayList<>();
         boolean relay = false;
@@ -42,7 +40,9 @@ public class Subscribe {
             if (cmd.containsKey("id")) {
                 response.put("response", "success");
                 response.put("id", cmd.get("id"));
+                send(out, logr_debug, response);
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
+                sleep(2000);
                 if (cmd.containsKey("relay")) {
                     if (cmd.get("relay").equals("true")) {
                         relay = true;
@@ -51,22 +51,26 @@ public class Subscribe {
                 HashMap<String, JSONObject> sub = new HashMap<>();
                 sub.put((String) cmd.get("id"), (JSONObject) cmd.get("resourceTemplate"));
                 Server.updateSubList(clientSocket, sub);
-                subscribe(cmd,clientSocket, resourceList, secure, logr_debug, resTempList, relay);
+                subscribe(cmd,clientSocket, resourceList, secure, logr_debug, resTempList, relay, ip, port, debug);
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "missing ID");
+                send(out, logr_debug, response);
             }
         } else {
             response.put("response", "error");
             response.put("errorMessage", "missing resourceTemplate");
+            send(out, logr_debug, response);
         }
     }
 
-    public static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
-                                 boolean secure, Logger logr_debug,
-                                 ArrayList<JSONObject> resTempList, boolean relay) {
+
+    private static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
+                                 boolean secure, Logger logr_debug, ArrayList<JSONObject> resTempList,
+                                 boolean relay, String ip, int port, boolean debug) {
         int count = 0;
         boolean flag = true;
+
         try {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
@@ -86,21 +90,40 @@ public class Subscribe {
                 send(out, logr_debug, sendMsg);
 
                 while (flag) {
+                    //check if unsubscribe
+                    sleep(2000);
                     if (in.available() > 0) {
                         String recv = in.readUTF();
                         System.out.println(recv);
                         if (recv.contains("UNSUBSCRIBE")) {
+                            logr_debug.fine("RECEIVED: " + recv);
                             JSONObject unsubmsg = new JSONObject();
                             unsubmsg.put("resultSize", count);
                             sendMsg.clear();
                             sendMsg.add(unsubmsg);
                             send(out, logr_debug, sendMsg);
+
                             flag = false;
                         }
+                    }
+
+                    //debug message
+                    if (debug) {
+                        FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
+                        BufferedReader br = new BufferedReader(file);
+                        String dCurrentLine;
+                        while ((dCurrentLine = br.readLine()) != null) {
+                            System.out.println(dCurrentLine);
+                        }
+                        Server.setupDebug();
+                        br.close();
+                        file.close();
                     }
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -120,7 +143,19 @@ public class Subscribe {
 
     }
 
-    public static JSONObject selfSubscribe(Resource src, ArrayList<JSONObject> resTempList) {
+    private static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
+//        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+        logr_debug.fine("SENT: " + sendMsg.toString());
+        //System.out.println(sendMsg.toString());
+        try {
+            out.writeUTF(sendMsg.toString());
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static JSONObject selfSubscribe(Resource src, ArrayList<JSONObject> resTempList) {
 
         for (JSONObject resTemp : resTempList) {
             JSONArray cmdTagsJson = resTemp.getJSONArray("tags");
@@ -170,7 +205,7 @@ public class Subscribe {
         return nul;
     }
 
-    public static void otherSubscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource>
+    private static void otherSubscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource>
             resourceList, Boolean secure, Logger logr_debug) {
 
     }

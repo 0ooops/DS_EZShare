@@ -283,7 +283,12 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
                             break;
                         case "SUBSCRIBE":
-                            Subscribe.init(cmd, out, clientSocket, resourceList, secure, logr_debug);
+                            boolean ifDebug = false;
+                            if (args.hasOption("debug")) {
+                                ifDebug = true;
+                            }
+                            Subscribe.init(cmd, clientSocket, resourceList, secure,
+                                    logr_debug, getRealIp(), port, ifDebug);
                             subList.remove(clientSocket);
                             //System.out.println("sub num after: " + subList.size());
                             /*
@@ -327,7 +332,7 @@ public class Server {
             clientSocket.close();
             logr_debug.fine("The connection with " + getAddress + ":" +
                     clientSocket.getPort() + " has been closed.");
-            if (args.hasOption("debug")) {
+            if (args.hasOption("debug")){;// && !cmd.get("command").toString().equals("SUBSCRIBE")) {
                 BufferedReader brDebug = new BufferedReader(
                         new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
                 String dCurrentLine;
@@ -359,7 +364,7 @@ public class Server {
         }
     }
 
-    private static void setupDebug() {
+    public static void setupDebug() {
         LogManager.getLogManager().reset();
         logr_debug.setLevel(Level.ALL);
         try {

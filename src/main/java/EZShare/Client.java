@@ -179,7 +179,7 @@ public class Client {
                     break;
                 case SUBSCRIBE:
                     JSONObject sendSubscribe = subscribeCommand(cmd);
-                    sendSubMessage(sendSubscribe);
+                    sendSubMessage(sendSubscribe, cmd);
                     break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
@@ -515,13 +515,14 @@ public class Client {
      *
      * @param sendJson json object to be sent.
      */
-    private static void sendSubMessage(JSONObject sendJson) {
+    private static void sendSubMessage(JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
 //        ClientThread clientThread = new ClientThread(host,port,sendData);
         String receiveData = "";
         boolean unSubscribe = false;
         Socket connection;
         try {
+
             if (secure) {
                 System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -537,13 +538,13 @@ public class Client {
             logr.fine("SENT:" + sendData);
 
             while (!unSubscribe) {
-                Thread.sleep(1000);
+                Thread.sleep(2000);
                 while (in.available() > 0) {
                     String read = in.readUTF();
 //                    System.out.println(read);
                     receiveData += read + ",";
+                    logr.fine("RECEIVED:" + receiveData);
                 }
-
                 if (!receiveData.equals("")) {
                     receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
 //                System.out.println(receiveData);
@@ -567,11 +568,25 @@ public class Client {
                 }
                 if (enterRead.ready())  {
                     if (enterRead.read() == '\n'){
-                        out.writeUTF(unsubscribeCommand().toString());
+                        String unsubMsg = unsubscribeCommand().toString();
+                        out.writeUTF(unsubMsg);
+                        logr.fine("SENT:" + unsubMsg);
                         unSubscribe = true;
                     }else {
                         enterRead.read();
                     }
+                }
+                if (cmd.hasOption("debug")) {
+                    //print logfile
+                    FileReader file = new FileReader("./logfile.log");
+                    BufferedReader br = new BufferedReader(file);
+                    String sCurrentLine;
+                    while ((sCurrentLine = br.readLine()) != null) {
+                        System.out.println(sCurrentLine);
+                    }
+                    setupLogger();
+                    br.close();
+                    file.close();
                 }
             }
             if (unSubscribe){
@@ -595,7 +610,17 @@ public class Client {
                     }
                 }
             }
-
+            if (cmd.hasOption("debug")) {
+                //print logfile
+                FileReader file = new FileReader("./logfile.log");
+                BufferedReader br = new BufferedReader(file);
+                String sCurrentLine;
+                while ((sCurrentLine = br.readLine()) != null) {
+                    System.out.println(sCurrentLine);
+                }
+                br.close();
+                file.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
