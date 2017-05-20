@@ -563,13 +563,14 @@ public class Client {
                         printSubResult(recv);
                         receiveData = "";
                         recv.clear();
-                        System.out.println("press any key to continue, press ENTER to unsubscribe");
                     }
                 }
                 if (enterRead.ready())  {
                     if (enterRead.read() == '\n'){
                         out.writeUTF(unsubscribeCommand().toString());
                         unSubscribe = true;
+                    }else {
+                        enterRead.read();
                     }
                 }
             }
@@ -593,8 +594,6 @@ public class Client {
                         System.out.println(finalRecv);
                     }
                 }
-                System.out.println("unsubscribed");
-                System.exit(0);
             }
 
         } catch (IOException e) {

@@ -79,12 +79,16 @@ public class Subscribe {
 
                 while (flag) {
                     if (in.available() > 0) {
-                        JSONObject unsubmsg = new JSONObject();
-                        unsubmsg.put("resultSize", count);
-                        sendMsg.clear();
-                        sendMsg.add(unsubmsg);
-                        send(out, logr_debug, sendMsg);
-                        flag=false;
+                        String recv = in.readUTF();
+                        System.out.println(recv);
+                        if (recv.contains("UNSUBSCRIBE")) {
+                            JSONObject unsubmsg = new JSONObject();
+                            unsubmsg.put("resultSize", count);
+                            sendMsg.clear();
+                            sendMsg.add(unsubmsg);
+                            send(out, logr_debug, sendMsg);
+                            flag = false;
+                        }
                     }
                 }
             }
