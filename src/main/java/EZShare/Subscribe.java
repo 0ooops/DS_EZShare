@@ -48,8 +48,8 @@ public class Subscribe {
                         relay = true;
                     }
                 }
-                HashMap<String, JSONObject> sub = new HashMap<>();
-                sub.put((String) cmd.get("id"), (JSONObject) cmd.get("resourceTemplate"));
+                HashMap<String, ArrayList<JSONObject>> sub = new HashMap<>();
+                sub.put((String) cmd.get("id"), resTempList);
                 Server.updateSubList(clientSocket, sub);
                 subscribe(cmd,clientSocket, resourceList, secure, logr_debug, resTempList, relay, ip, port, debug);
             } else {
@@ -68,7 +68,6 @@ public class Subscribe {
     private static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                                  boolean secure, Logger logr_debug, ArrayList<JSONObject> resTempList,
                                  boolean relay, String ip, int port, boolean debug) {
-        int count = 0;
         boolean flag = true;
 
         try {
@@ -79,11 +78,11 @@ public class Subscribe {
                 //System.out.println(selfSubscribe());
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
                 for (Resource src : resourceList.values()) {
-                    JSONObject m = selfSubscribe(src, resTempList);
+                    JSONObject m = checkTemplate(src, resTempList);
 
                     if (!m.has("null")) {
                         sendMsg.add(m);
-                        count++;
+                        Server.incrementCounter(clientSocket);
                     }
 
                 }
@@ -98,7 +97,7 @@ public class Subscribe {
                         if (recv.contains("UNSUBSCRIBE")) {
                             logr_debug.fine("RECEIVED: " + recv);
                             JSONObject unsubmsg = new JSONObject();
-                            unsubmsg.put("resultSize", count);
+                            unsubmsg.put("resultSize", Server.getCounter(clientSocket));
                             sendMsg.clear();
                             sendMsg.add(unsubmsg);
                             send(out, logr_debug, sendMsg);
@@ -128,7 +127,7 @@ public class Subscribe {
         }
     }
 
-    private static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
+    public static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
 //        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         logr_debug.fine("SENT: " + sendMsg.toString());
         //System.out.println(sendMsg.toString());
@@ -143,7 +142,7 @@ public class Subscribe {
 
     }
 
-    private static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
+    public static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
 //        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         logr_debug.fine("SENT: " + sendMsg.toString());
         //System.out.println(sendMsg.toString());
@@ -155,7 +154,13 @@ public class Subscribe {
         }
     }
 
-    private static JSONObject selfSubscribe(Resource src, ArrayList<JSONObject> resTempList) {
+    /**
+     * check if the resource matches resource template
+     * @param src resource to be check
+     * @param resTempList resource templates
+     * @return the resource if match or with a null tag if unmatch
+     */
+    public static JSONObject checkTemplate(Resource src, ArrayList<JSONObject> resTempList) {
 
         for (JSONObject resTemp : resTempList) {
             JSONArray cmdTagsJson = resTemp.getJSONArray("tags");

@@ -39,7 +39,8 @@ public class Server {
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
     //private static HashMap<String, HashMap<Integer, String>> subList = new HashMap<>();
-    private static HashMap<Socket, HashMap<String, JSONObject>> subList = new HashMap<>();
+    private static HashMap<Socket, HashMap<String, ArrayList<JSONObject>>> subList = new HashMap<>();
+    private static HashMap<Socket, Integer> subCounterList = new HashMap<>();
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
@@ -290,6 +291,7 @@ public class Server {
                             Subscribe.init(cmd, clientSocket, resourceList, secure,
                                     logr_debug, getRealIp(), port, ifDebug);
                             subList.remove(clientSocket);
+                            subCounterList.remove(clientSocket);
                             //System.out.println("sub num after: " + subList.size());
                             /*
                             if(m.get("response").equals("success")) {
@@ -346,8 +348,9 @@ public class Server {
         }
     }
 
-    public static void updateSubList(Socket clientSocket, HashMap<String, JSONObject> sub) {
+    public static void updateSubList(Socket clientSocket, HashMap<String, ArrayList<JSONObject>> sub) {
         subList.put(clientSocket, sub);
+        subCounterList.put(clientSocket, new Integer(0));
     }
 
     private static void setupLogger() {
@@ -461,5 +464,33 @@ public class Server {
         } else {
             return localIp;
         }
+    }
+
+    public static void notifySubs(Resource src) {
+        JSONObject checkedSrc = new JSONObject();
+        JSONArray sendMsg = new JSONArray();
+        try {
+            for (Socket clientSocket : subList.keySet()) {
+                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+                for (ArrayList<JSONObject> srcTemp : subList.get(clientSocket).values()) {
+                    checkedSrc = Subscribe.checkTemplate(src, srcTemp);
+                    if (!checkedSrc.has("null")) {
+                        sendMsg.add(checkedSrc);
+                        Server.incrementCounter(clientSocket);
+                        Subscribe.send(out, logr_debug, sendMsg);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int getCounter(Socket clientSocket) {
+        return subCounterList.get(clientSocket);
+    }
+
+    public static void incrementCounter(Socket clientSocket) {
+        subCounterList.put(clientSocket, subCounterList.get(clientSocket).intValue() + 1);
     }
 }

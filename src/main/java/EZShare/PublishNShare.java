@@ -63,6 +63,7 @@ public class PublishNShare {
                     if (index != -1) {
                         //resourceList.remove(index);
                         resourceList.put(index, res);
+                        Server.notifySubs(res);
                         response.put("response", "success");
                     } else {
                         response.put("response", "error");
@@ -136,6 +137,7 @@ public class PublishNShare {
                              */
                             if (index != -1) {
                                 resourceList.put(index, res);
+                                Server.notifySubs(res);
                                 response.put("response", "success");
                             } else {
                                 response.put("response", "error");
@@ -212,4 +214,5 @@ public class PublishNShare {
         //add resource to resource list
         return res;
     }
+
 }
