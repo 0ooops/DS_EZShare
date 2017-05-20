@@ -51,7 +51,6 @@ public class Client {
     private static final String FETCH = "-fetch";
     private static final String EXCHANGE = "-exchange";
     private static final String SUBSCRIBE = "-subscribe";
-    private static final String UNSUBSCRIBE = "-unsubscribe";
 
     public static void main(String[] args) {
         /**
@@ -78,7 +77,6 @@ public class Client {
         options.addOption("tags", true, "resource tags, tag1,tag2,tag3,...");
         options.addOption("uri", true, "resource URI");
         options.addOption("relay", true, "whether query from other servers");
-        options.addOption("id", true, "subscription id");
         options.addOption("secure", false, "whether to use a secured connection");
 
         CommandLineParser parser = new DefaultParser();
@@ -183,12 +181,6 @@ public class Client {
                     JSONObject sendSubscribe = subscribeCommand(cmd);
                     sendSubMessage(sendSubscribe, cmd);
                     break;
-                    /*
-                case UNSUBSCRIBE:
-                    JSONObject sendUnsubscribe = unsubscribeCommand();
-                    sendMessage(command, sendUnsubscribe, cmd);
-                    break;
-                    */
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
                     sendMessage(command, sendFetch, cmd);
@@ -572,10 +564,15 @@ public class Client {
                         printSubResult(recv);
                         receiveData = "";
                         recv.clear();
-                        while (enterRead.read() == '\n')  {
+                        System.out.println("press any key to continue, press ENTER to unsubscribe");
+                        if (enterRead.read() == '\n')  {
                             //TODO:unSubscribe!!!
+                            unsubscribeCommand();
+
                             System.out.println("canceled subscription");
                             System.exit(0);
+                        }else {
+                            enterRead.readLine();
                         }
                     }
                 }
@@ -619,7 +616,6 @@ public class Client {
         commandSet.add(SHARE);
         commandSet.add(QUERY);
         commandSet.add(SUBSCRIBE);
-        commandSet.add(UNSUBSCRIBE);
         commandSet.add(FETCH);
         commandSet.add(EXCHANGE);
         for (String arg : args) {

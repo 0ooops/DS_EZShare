@@ -92,7 +92,12 @@ public class Subscribe {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
             }
             out.flush();
+            Thread.sleep(4000);
+            out.writeUTF(sendMsg.getJSONObject(1).toString());
+            out.flush();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
