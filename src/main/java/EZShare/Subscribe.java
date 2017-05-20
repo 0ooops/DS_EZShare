@@ -22,9 +22,6 @@ import java.util.logging.Logger;
 import static java.lang.Thread.sleep;
 
 public class Subscribe {
-    //resource Template
-    private static ArrayList<JSONObject> resTempList = new ArrayList<>();
-    private static boolean relay = false;
 
     /**
      * Initiate the subscription
@@ -32,8 +29,13 @@ public class Subscribe {
      * @param cmd JSON command
      * @return the response
      */
-    public static JSONObject init(JSONObject cmd, DataOutputStream out) throws IOException, InterruptedException {
+    public static void init(JSONObject cmd, DataOutputStream out, Socket clientSocket,
+                                  HashMap<Integer, Resource> resourceList, boolean secure, Logger logr_debug)
+            throws IOException, InterruptedException {
         JSONObject response = new JSONObject();
+        ArrayList<JSONObject> resTempList = new ArrayList<>();
+        boolean relay = false;
+
         //must contain resource template
         if (cmd.containsKey("resourceTemplate")) {
             //must contain an id
@@ -46,6 +48,10 @@ public class Subscribe {
                         relay = true;
                     }
                 }
+                HashMap<String, JSONObject> sub = new HashMap<>();
+                sub.put((String) cmd.get("id"), (JSONObject) cmd.get("resourceTemplate"));
+                Server.updateSubList(clientSocket, sub);
+                subscribe(cmd,clientSocket, resourceList, secure, logr_debug, resTempList, relay);
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "missing ID");
@@ -54,14 +60,11 @@ public class Subscribe {
             response.put("response", "error");
             response.put("errorMessage", "missing resourceTemplate");
         }
-        out.writeUTF(response.toString());
-        sleep(1000);
-        out.flush();
-        return response;
     }
 
     public static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
-                                 Boolean secure, Logger logr_debug) {
+                                 boolean secure, Logger logr_debug,
+                                 ArrayList<JSONObject> resTempList, boolean relay) {
         int count = 0;
         boolean flag = true;
         try {
@@ -72,11 +75,13 @@ public class Subscribe {
                 //System.out.println(selfSubscribe());
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
                 for (Resource src : resourceList.values()) {
-                    JSONObject m = selfSubscribe(src);
-                    if (!m.equals(null)) {
+                    JSONObject m = selfSubscribe(src, resTempList);
+
+                    if (!m.has("null")) {
                         sendMsg.add(m);
                         count++;
                     }
+
                 }
                 send(out, logr_debug, sendMsg);
 
@@ -103,7 +108,7 @@ public class Subscribe {
     private static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
 //        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         logr_debug.fine("SENT: " + sendMsg.toString());
-        System.out.println(sendMsg.toString());
+        //System.out.println(sendMsg.toString());
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
@@ -115,7 +120,7 @@ public class Subscribe {
 
     }
 
-    public static JSONObject selfSubscribe(Resource src) {
+    public static JSONObject selfSubscribe(Resource src, ArrayList<JSONObject> resTempList) {
 
         for (JSONObject resTemp : resTempList) {
             JSONArray cmdTagsJson = resTemp.getJSONArray("tags");
@@ -160,8 +165,9 @@ public class Subscribe {
                 return src.toJSON();
             }
         }
-
-        return null;
+        JSONObject nul = new JSONObject();
+        nul.put("null", "true");
+        return nul;
     }
 
     public static void otherSubscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource>

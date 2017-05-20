@@ -283,45 +283,20 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
                             break;
                         case "SUBSCRIBE":
-                            JSONObject m = Subscribe.init(cmd, out);
+                            Subscribe.init(cmd, out, clientSocket, resourceList, secure, logr_debug);
+                            subList.remove(clientSocket);
+                            //System.out.println("sub num after: " + subList.size());
+                            /*
                             if(m.get("response").equals("success")) {
                                 String id = (String) m.get("id");
                                 JSONObject resTemp = (JSONObject) m.get("resourceTemplate");
-                                //subList.put(clientSocket.getLocalAddress().toString(), new HashMap<>());
-                                //subList.get(clientSocket.getLocalAddress().toString()).
-                                //        put(clientSocket.getLocalPort(), key);
 
                                 subList.put(clientSocket, new HashMap<>());
                                 subList.get(clientSocket).put(id, resTemp);
                                 System.out.println("sub num: " + subList.size());
                                 Subscribe.subscribe(cmd,clientSocket, resourceList, secure, logr_debug);
-                                /*
-                                while(clientSocket.isConnected()) {
-                                    sleep(2000);
-
-                                    System.out.println(in.available());
-                                    if(in.available() > 0) {
-                                        String receiveUnsubData = in.readUTF();
-                                        logr_debug.fine("RECEIVED: " + receiveUnsubData);
-                                        if(JSONObject.fromObject(receiveUnsubData).
-                                                get("command").equals("UNSUBSCRIBE")) {
-                                            JSONObject unsubmsg = new JSONObject();
-                                            unsubmsg.put("response", "end subscription");
-                                            unsubmsg.put("id", cmd.get("id"));
-                                            sendMsg.add(unsubmsg);
-                                            break;
-                                        }
-                                    }
-
-                                }*/
-                            }
+                            }*/
                             break;
-//                        case "UNSUBSCRIBE":
-//                            JSONObject unsubmsg = new JSONObject();
-//                            unsubmsg.put("response", "end subscription");
-//                            unsubmsg.put("id", cmd.get("id"));
-//                            sendMsg.add(unsubmsg);
-//                            break;
                         default:
                             msg.put("response", "error");
                             msg.put("errorMessage", "invalid command");
@@ -364,6 +339,10 @@ public class Server {
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void updateSubList(Socket clientSocket, HashMap<String, JSONObject> sub) {
+        subList.put(clientSocket, sub);
     }
 
     private static void setupLogger() {

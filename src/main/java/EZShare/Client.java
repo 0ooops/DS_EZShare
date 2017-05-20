@@ -655,6 +655,7 @@ public class Client {
 
     private static void printSubResult(JSONArray recv) {
         for (int i = 0; i < recv.size(); i++) {
+            System.out.println(recv.getJSONObject(i).toString());
             JSONObject queryList = recv.getJSONObject(i);
             String qName = (String) queryList.get("name");
             String qUri = (String) queryList.get("uri");
