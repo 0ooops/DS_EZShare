@@ -179,7 +179,7 @@ public class Client {
                     break;
                 case SUBSCRIBE:
                     JSONObject sendSubscribe = subscribeCommand(cmd);
-                    sendSubMessage(sendSubscribe, cmd);
+                    sendSubMessage(sendSubscribe);
                     break;
                 case FETCH:
                     JSONObject sendFetch = fetchCommand(cmd);
@@ -514,9 +514,8 @@ public class Client {
      * subscribing and maintaining connection
      *
      * @param sendJson json object to be sent.
-     * @param cmd      cmd may specify another server host and port number.
      */
-    private static void sendSubMessage(JSONObject sendJson, CommandLine cmd) {
+    private static void sendSubMessage(JSONObject sendJson) {
         String sendData = sendJson.toString();
 //        ClientThread clientThread = new ClientThread(host,port,sendData);
         String receiveData = "";
@@ -567,10 +566,9 @@ public class Client {
                         System.out.println("press any key to continue, press ENTER to unsubscribe");
                         if (enterRead.read() == '\n')  {
                             //TODO:unSubscribe!!!
-                            unsubscribeCommand();
+                            out.writeUTF(unsubscribeCommand().toString());
+                            unSubscribe = true;
 
-                            System.out.println("canceled subscription");
-                            System.exit(0);
                         }else {
                             enterRead.readLine();
                         }
@@ -578,6 +576,30 @@ public class Client {
                 }
 
             }
+            if (unSubscribe){
+                do {
+                    Thread.sleep(2000);
+                    String read = in.readUTF();
+//                    System.out.println(read);
+                    receiveData += read + ",";
+                }while (in.available() > 0);
+
+                if (!receiveData.equals("")) {
+                    receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+                    JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                    if (recv.size()==1){
+                        System.out.println(recv.toString());
+                    }else {
+                        String finalRecv =recv.get(recv.size()-1).toString();
+                        recv.remove(recv.size()-1);
+                        printSubResult(recv);
+                        System.out.println(finalRecv);
+                    }
+                }
+                System.out.println("unsubscribed");
+                System.exit(0);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

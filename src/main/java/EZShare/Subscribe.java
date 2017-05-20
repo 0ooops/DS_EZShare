@@ -62,8 +62,10 @@ public class Subscribe {
 
     public static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                                  Boolean secure, Logger logr_debug) {
-        //DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+        int count = 0;
         try {
+
+            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             JSONArray sendMsg = new JSONArray();
             if (!relay) {
@@ -71,16 +73,26 @@ public class Subscribe {
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
                 for (Resource src : resourceList.values()) {
                     sendMsg.add(selfSubscribe(src));
+                    count++;
                 }
                 send(out, logr_debug, sendMsg);
-//            while(clientSocket.isConnected()) {
-//
-//            }
+
+                boolean flag = true;
+                while (flag) {
+                    if (in.available() > 0) {
+                        JSONObject unsubmsg = new JSONObject();
+                        unsubmsg.put("resultSize", count);
+                        sendMsg.clear();
+                        sendMsg.add(unsubmsg);
+                        System.out.println(sendMsg);
+                        send(out, logr_debug, sendMsg);
+                        flag=false;
+                    }
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     private static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
@@ -92,12 +104,7 @@ public class Subscribe {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
             }
             out.flush();
-            Thread.sleep(4000);
-            out.writeUTF(sendMsg.getJSONObject(1).toString());
-            out.flush();
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 

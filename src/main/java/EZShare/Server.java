@@ -316,12 +316,12 @@ public class Server {
                                 }*/
                             }
                             break;
-                        case "UNSUBSCRIBE":
-                            JSONObject unsubmsg = new JSONObject();
-                            unsubmsg.put("response", "end subscription");
-                            unsubmsg.put("id", cmd.get("id"));
-                            sendMsg.add(unsubmsg);
-                            break;
+//                        case "UNSUBSCRIBE":
+//                            JSONObject unsubmsg = new JSONObject();
+//                            unsubmsg.put("response", "end subscription");
+//                            unsubmsg.put("id", cmd.get("id"));
+//                            sendMsg.add(unsubmsg);
+//                            break;
                         default:
                             msg.put("response", "error");
                             msg.put("errorMessage", "invalid command");
