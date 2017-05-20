@@ -39,7 +39,7 @@ public class Server {
     private static HashMap<Integer, Resource> resourceList = new HashMap<>();
     private static HashMap<String, Long> clientList = new HashMap<>();
     //private static HashMap<String, HashMap<Integer, String>> subList = new HashMap<>();
-    private static HashMap<Socket, HashMap<Integer, JSONObject>> subList = new HashMap<>();
+    private static HashMap<Socket, HashMap<String, JSONObject>> subList = new HashMap<>();
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
@@ -283,9 +283,9 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
                             break;
                         case "SUBSCRIBE":
-                            JSONObject m = Subscribe.init(cmd, clientSocket);
+                            JSONObject m = Subscribe.init(cmd, out);
                             if(m.get("response").equals("success")) {
-                                Integer id = (Integer) m.get("id");
+                                String id = (String) m.get("id");
                                 JSONObject resTemp = (JSONObject) m.get("resourceTemplate");
                                 //subList.put(clientSocket.getLocalAddress().toString(), new HashMap<>());
                                 //subList.get(clientSocket.getLocalAddress().toString()).
@@ -294,7 +294,7 @@ public class Server {
                                 subList.put(clientSocket, new HashMap<>());
                                 subList.get(clientSocket).put(id, resTemp);
                                 System.out.println("sub num: " + subList.size());
-                                Subscribe.subscribe(cmd, clientSocket, resourceList, secure, logr_debug);
+                                Subscribe.subscribe(cmd,clientSocket, resourceList, secure, logr_debug);
                                 /*
                                 while(clientSocket.isConnected()) {
                                     sleep(2000);
