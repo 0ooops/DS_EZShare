@@ -538,7 +538,6 @@ public class Client {
             int count = -1;
 
             while (!unSubscribe) {
-                Thread.sleep(2000);
                 while (in.available() > 0) {
                     String read = in.readUTF();
 //                    System.out.println(read);
