@@ -136,12 +136,13 @@ public class Subscribe {
 
     public static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
 //        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-        logr_debug.fine("SENT: " + sendMsg.toString());
+
         //System.out.println(sendMsg.toString());
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
             }
+            logr_debug.fine("SENT: " + sendMsg.toString());
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -151,10 +152,11 @@ public class Subscribe {
 
     public static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
 //        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-        logr_debug.fine("SENT: " + sendMsg.toString());
+
         //System.out.println(sendMsg.toString());
         try {
             out.writeUTF(sendMsg.toString());
+            logr_debug.fine("SENT: " + sendMsg.toString());
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();

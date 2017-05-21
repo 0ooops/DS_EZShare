@@ -477,6 +477,7 @@ public class Server {
                         sendMsg.add(checkedSrc);
                         Server.incrementCounter(clientSocket);
                         Subscribe.send(out, logr_debug, sendMsg);
+                        sendMsg.clear();
                     }
                 }
             }
