@@ -120,7 +120,7 @@ public class Client {
         }
 
 /**
- * check if port number is valid
+ * check if connection will be secured.
  */
         if (cmd.hasOption("secure")) {
             secure = true;
@@ -653,17 +653,17 @@ public class Client {
 
     private static void printSubResult(JSONArray recv) {
         for (int i = 0; i < recv.size(); i++) {
-            JSONObject queryList = recv.getJSONObject(i);
-            String qName = (String) queryList.get("name");
-            String qUri = (String) queryList.get("uri");
-            JSONArray qTags = (JSONArray) queryList.get("tags");
-            String qEzserver = (String) queryList.get("ezserver");
-            String qChannel = (String) queryList.get("channel");
-            System.out.println("name: " + qName);
-            System.out.println("tags: " + qTags.toString());
-            System.out.println("uri: " + qUri);
-            System.out.println("channel: " + qChannel);
-            System.out.println("ezserver: " + qEzserver);
+            JSONObject subList = recv.getJSONObject(i);
+            String subName = (String) subList.get("name");
+            String subUri = (String) subList.get("uri");
+            JSONArray subTags = (JSONArray) subList.get("tags");
+            String subEzserver = (String) subList.get("ezserver");
+            String subChannel = (String) subList.get("channel");
+            System.out.println("name: " + subName);
+            System.out.println("tags: " + subTags.toString());
+            System.out.println("uri: " + subUri);
+            System.out.println("channel: " + subChannel);
+            System.out.println("ezserver: " + subEzserver);
             System.out.println();
         }
         System.out.println();
