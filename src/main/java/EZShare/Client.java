@@ -25,7 +25,8 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
 public class Client {
-    private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME + "logForNomal");
+    private final static Logger logrSub = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME + "logForSub");
     /**
      * default server host and port
      */
@@ -51,6 +52,7 @@ public class Client {
     private static final String FETCH = "-fetch";
     private static final String EXCHANGE = "-exchange";
     private static final String SUBSCRIBE = "-subscribe";
+    private static String logForSub = "";
 
     public static void main(String[] args) {
         /**
@@ -124,11 +126,7 @@ public class Client {
             secure = true;
         }
 
-/**
- * setup log
- */
-        setupLogger();
-        logr.info("setting debug on");
+
 /**
  1.judge whether the client gives any command.
  2.verify the command.
@@ -141,6 +139,13 @@ public class Client {
             System.exit(1);
         } else {
             String command = searchCommand(args);
+            if (!command.equals(SUBSCRIBE)) {
+                setupLogger();
+                logr.info("setting debug on");
+            } else {
+                setupSubLogger();
+                logrSub.info("setting debug on");
+            }
             switch (command) {
                 case PUBLISH:
                     if (!cmd.hasOption("uri")) {
@@ -296,9 +301,7 @@ public class Client {
         id = RandomStringUtils.randomAlphabetic(10);
         subscribe.put("command", "SUBSCRIBE");
         subscribe.put("id", id);
-// TODO：
-// subscribe.put("relay", true);
-        logr.fine("subscribing from " + host + ":" + port);
+        logrSub.fine("subscribing from " + host + ":" + port);
         return subscribe;
     }
 
@@ -311,7 +314,7 @@ public class Client {
         JSONObject unsubscribe = new JSONObject();
         unsubscribe.put("command", "UNSUBSCRIBE");
         unsubscribe.put("id", id);
-        logr.fine("unsubscribing from " + host + ":" + port);
+        logrSub.fine("unsubscribing from " + host + ":" + port);
         return unsubscribe;
     }
 
@@ -477,11 +480,7 @@ public class Client {
             }
             if (cmd.hasOption("debug")) {
                 //print logfile
-                BufferedReader br = new BufferedReader(new FileReader("./logfile.log"));
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    System.out.println(sCurrentLine);
-                }
+                printLogFromFile();
             } else if (!fetchSuccess) {
                 //print out
                 receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
@@ -535,7 +534,8 @@ public class Client {
             BufferedReader enterRead = new BufferedReader(new InputStreamReader(System.in));
             out.writeUTF(sendData);
             out.flush();
-            logr.fine("SENT:" + sendData);
+            logrSub.fine("SENT:" + sendData);
+            int count = -1;
 
             while (!unSubscribe) {
                 Thread.sleep(2000);
@@ -543,105 +543,78 @@ public class Client {
                     String read = in.readUTF();
 //                    System.out.println(read);
                     receiveData += read + ",";
-                    logr.fine("RECEIVED:" + receiveData);
-                }
-                if (!receiveData.equals("")) {
-                    receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
-//                System.out.println(receiveData);
-                    JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-                    JSONObject resp = recv.getJSONObject(0);
-                    if (resp.has("response")) {
-                        String respTpye = (String) resp.get("response");
-                        if (respTpye.equals("error")) {
-                            System.out.print("error,");
-                            System.out.println(resp.get("errorMessage") + "!");
-                        } else {
-                            System.out.println("success!");
-                            recv.clear();
-                            receiveData = "";
-                        }
-                    } else {
-                        printSubResult(recv);
-                        receiveData = "";
-                        recv.clear();
-                    }
-                }
-                if (enterRead.ready())  {
-                    if (enterRead.read() == '\n'){
-                        String unsubMsg = unsubscribeCommand().toString();
-                        out.writeUTF(unsubMsg);
-                        logr.fine("SENT:" + unsubMsg);
-                        unSubscribe = true;
-                    }else {
-                        enterRead.read();
-                    }
+                    logrSub.fine("RECEIVED:" + read);
                 }
                 if (cmd.hasOption("debug")) {
                     //print logfile
-                    FileReader file = new FileReader("./logfile.log");
-                    BufferedReader br = new BufferedReader(file);
-                    String sCurrentLine;
-                    while ((sCurrentLine = br.readLine()) != null) {
-                        System.out.println(sCurrentLine);
+                    count = printLogFromFile(count);
+                    receiveData = "";
+                } else {
+                    if (!receiveData.equals("")) {
+                        receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+//                System.out.println(receiveData);
+                        JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                        JSONObject resp = recv.getJSONObject(0);
+                        if (resp.has("response")) {
+                            String respTpye = (String) resp.get("response");
+                            if (respTpye.equals("error")) {
+                                System.out.print("error,");
+                                System.out.println(resp.get("errorMessage") + "!");
+                            } else {
+                                System.out.println("success!");
+                                recv.clear();
+                                receiveData = "";
+                            }
+                        } else {
+                            printSubResult(recv);
+                            receiveData = "";
+                            recv.clear();
+                        }
                     }
-                    setupLogger();
-                    br.close();
-                    file.close();
+                }
+
+                if (enterRead.ready()) {
+                    if (enterRead.read() == '\n') {
+                        String unsubMsg = unsubscribeCommand().toString();
+                        out.writeUTF(unsubMsg);
+                        logrSub.fine("SENT:" + unsubMsg);
+                        unSubscribe = true;
+                    } else {
+                        enterRead.read();
+                    }
                 }
             }
-            if (unSubscribe){
+            if (unSubscribe) {
                 do {
                     Thread.sleep(1000);
                     String read = in.readUTF();
 //                    System.out.println(read);
                     receiveData += read + ",";
-                }while (in.available() > 0);
-
+                    logrSub.fine("RECEIVED:" + read);
+                } while (in.available() > 0);
                 if (!receiveData.equals("")) {
-                    receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
-                    JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-                    if (recv.size()==1){
-                        System.out.println(recv.toString());
-                    }else {
-                        String finalRecv =recv.get(recv.size()-1).toString();
-                        recv.remove(recv.size()-1);
-                        printSubResult(recv);
-                        System.out.println(finalRecv);
+                    if (cmd.hasOption("debug")) {
+                        //print logfile
+                        printLogFromFile(count);
+                    } else {
+                        receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+                        JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                        if (recv.size() == 1) {
+                            System.out.println(recv.toString());
+                        } else {
+                            String finalRecv = recv.get(recv.size() - 1).toString();
+                            recv.remove(recv.size() - 1);
+                            printSubResult(recv);
+                            System.out.println(finalRecv);
+                        }
                     }
+
                 }
-            }
-            if (cmd.hasOption("debug")) {
-                //print logfile
-                FileReader file = new FileReader("./logfile.log");
-                BufferedReader br = new BufferedReader(file);
-                String sCurrentLine;
-                while ((sCurrentLine = br.readLine()) != null) {
-                    System.out.println(sCurrentLine);
-                }
-                br.close();
-                file.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * setup log file.
-     */
-    private static void setupLogger() {
-        LogManager.getLogManager().reset();
-        logr.setLevel(Level.ALL);
-        try {
-            FileHandler fh = new FileHandler("logfile.log");
-            fh.setLevel(Level.FINE);
-            logr.addHandler(fh);
-            MyFormatter formatter = new MyFormatter();
-            fh.setFormatter(formatter);
-        } catch (java.io.IOException e) {
-            logr.finer("File logger not working.");
         }
     }
 
@@ -680,7 +653,6 @@ public class Client {
 
     private static void printSubResult(JSONArray recv) {
         for (int i = 0; i < recv.size(); i++) {
-            //System.out.println(recv.getJSONObject(i).toString());
             JSONObject queryList = recv.getJSONObject(i);
             String qName = (String) queryList.get("name");
             String qUri = (String) queryList.get("uri");
@@ -716,4 +688,83 @@ public class Client {
         int resultSize = (recv.size() - 2) > 0 ? (recv.size() - 2) : 0;
         System.out.println("hit " + resultSize + " resource(s)");
     }
+
+    private static void printLogFromFile() {
+        FileReader file = null;
+        try {
+            file = new FileReader("./logfile.log");
+            BufferedReader br = new BufferedReader(file);
+            String sCurrentLine;
+            while ((sCurrentLine = br.readLine()) != null) {
+                System.out.println(sCurrentLine);
+            }
+            br.close();
+            file.close();
+        } catch (FileNotFoundException e) {
+            logr.finer("File logger not working.");
+        } catch (IOException e) {
+            logr.finer("Exceptions.");
+        }
+    }
+
+    private static int printLogFromFile(int offset) {
+        FileReader file = null;
+        try {
+            int count = offset;
+            file = new FileReader("./" + logForSub + ".log");
+            BufferedReader br = new BufferedReader(file);
+            String sCurrentLine;
+            while (count > -1) {
+                br.readLine();
+                count--;
+            }
+            while ((sCurrentLine = br.readLine()) != null) {
+                System.out.println(sCurrentLine);
+                offset++;
+            }
+            br.close();
+            file.close();
+
+        } catch (FileNotFoundException e) {
+            logrSub.finer("File logger not working.");
+        } catch (IOException e) {
+            logrSub.finer("Exceptions.");
+        }
+        return offset;
+    }
+
+    /**
+     * setup log file.
+     */
+
+    private static void setupSubLogger() {
+        LogManager.getLogManager().reset();
+        logr.setLevel(Level.ALL);
+        logrSub.setLevel(Level.ALL);
+        logForSub = "logForSub" + randomAlphabetic(10);
+        try {
+            FileHandler fhSub = new FileHandler(logForSub + ".log");
+            fhSub.setLevel(Level.FINE);
+            logrSub.addHandler(fhSub);
+            MyFormatter formatter = new MyFormatter();
+            fhSub.setFormatter(formatter);
+        } catch (java.io.IOException e) {
+            logr.finer("File logger not working.");
+        }
+    }
+
+    private static void setupLogger() {
+        LogManager.getLogManager().reset();
+        logr.setLevel(Level.ALL);
+        try {
+            FileHandler fh = new FileHandler("logfile.log");
+            fh.setLevel(Level.FINE);
+            logr.addHandler(fh);
+            MyFormatter formatter = new MyFormatter();
+            fh.setFormatter(formatter);
+        } catch (java.io.IOException e) {
+            logr.finer("File logger not working.");
+        }
+    }
+
 }
