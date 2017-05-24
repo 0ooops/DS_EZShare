@@ -10,6 +10,7 @@ package EZShare;
  * @date: April 1, 2017
  */
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import java.util.ArrayList;
 
@@ -44,6 +45,56 @@ public class Resource {
         this.channel = src.getChannel();
         this.owner = src.getOwner();
         this.ezServer = src.getEzServer();
+    }
+
+    // Constructor: from JSONObject to Resource
+    public Resource(JSONObject jsonResource) {
+        if (jsonResource.has("uri")) {
+            this.uri = jsonResource.get("uri").toString();
+        } else {
+            this.uri = "";
+        }
+
+        if (jsonResource.has("name")) {
+            this.name = jsonResource.get("name").toString();
+        } else {
+            this.name = "";
+        }
+
+        if (jsonResource.has("owner")) {
+            this.owner = jsonResource.get("owner").toString();
+        } else {
+            this.owner = "";
+        }
+
+        if (jsonResource.has("channel")) {
+            this.channel = jsonResource.get("channel").toString();
+        } else {
+            this.channel = "";
+        }
+
+        if (jsonResource.has("description")) {
+            this.description = jsonResource.get("description").toString();
+        } else {
+            this.description = "";
+        }
+
+        if (jsonResource.has("tags")) {
+            JSONArray tempJ = jsonResource.getJSONArray("tags");
+            ArrayList<String> tempA = new ArrayList<>();
+            for (int i = 0; i < tempJ.size(); i++) {
+                tempA.add(tempJ.getString(i));
+            }
+            this.tags = tempA;
+        } else {
+            this.tags = new ArrayList<>();
+        }
+
+        if (jsonResource.has("ezserver")) {
+            this.ezServer = jsonResource.get("ezserver").toString();
+        } else {
+            this.ezServer = "";
+        }
     }
 
     //Getters and Setters

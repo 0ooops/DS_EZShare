@@ -3,23 +3,21 @@ package EZShare;
 /**
  * This class is used for subscribing and unsubscribing functions on EZShare System.
  *
- * @author: Jiacheng Chen
+ * @author: Jiacheng Chen and Jiahuan He
  * @date: May, 2017
  */
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-import org.apache.commons.cli.CommandLine;
-
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
-
 import static java.lang.Thread.sleep;
+
 
 public class Subscribe {
 
@@ -29,6 +27,7 @@ public class Subscribe {
      * @param cmd JSON command
      * @return the response
      */
+    static boolean relayFlag = true;
     public static void init(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                             boolean secure, Logger logr_debug, String ip,
                             int port, boolean debug, JSONArray serverList)
@@ -79,54 +78,65 @@ public class Subscribe {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             JSONArray sendMsg = new JSONArray();
-            if (!relay) {
-                //System.out.println(selfSubscribe());
-                resTempList.add((JSONObject) cmd.get("resourceTemplate"));
-                for (Resource src : resourceList.values()) {
-                    JSONObject m = checkTemplate(src, resTempList);
 
-                    if (!m.has("null")) {
-                        sendMsg.add(m);
-                        Server.incrementCounter(clientSocket);
-                    }
+            //System.out.println(selfSubscribe());
+            resTempList.add((JSONObject) cmd.get("resourceTemplate"));
+            for (Resource src : resourceList.values()) {
+                JSONObject m = checkTemplate(src, resTempList);
 
+                if (!m.has("null")) {
+                    sendMsg.add(m);
+                    Server.incrementCounter(clientSocket);
                 }
-                send(out, logr_debug, sendMsg);
 
-                while (flag) {
-                    //check if unsubscribe
-                    sleep(2000);
-                    if (in.available() > 0) {
-                        String recv = in.readUTF();
-                        System.out.println(recv);
-                        if (recv.contains("UNSUBSCRIBE")) {
-                            logr_debug.fine("RECEIVED: " + recv);
-                            JSONObject unsubmsg = new JSONObject();
-                            unsubmsg.put("resultSize", Server.getCounter(clientSocket));
-                            sendMsg.clear();
-                            sendMsg.add(unsubmsg);
-                            send(out, logr_debug, sendMsg);
-
-                            flag = false;
-                        }
-                    }
-
-                    //debug message
-                    if (debug) {
-                        FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
-                        BufferedReader br = new BufferedReader(file);
-                        String dCurrentLine;
-                        while ((dCurrentLine = br.readLine()) != null) {
-                            System.out.println(dCurrentLine);
-                        }
-                        Server.setupDebug();
-                        br.close();
-                        file.close();
-                    }
-                }
-            } else {
-                relay(cmd, serverList, secure, clientSocket, logr_debug);
             }
+            send(out, logr_debug, sendMsg);
+
+            // create new threads for relay connection
+            if (relay) {
+                Thread startRelay = new Thread(() -> {
+                    try {
+                        relay(cmd, serverList, secure, logr_debug);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+                startRelay.start();
+            }
+
+            while (flag) {
+                //check if unsubscribe
+                sleep(2000);
+                if (in.available() > 0) {
+                    String recv = in.readUTF();
+                    System.out.println(recv);
+                    if (recv.contains("UNSUBSCRIBE")) {
+                        logr_debug.fine("RECEIVED: " + recv);
+                        JSONObject unsubmsg = new JSONObject();
+                        unsubmsg.put("resultSize", Server.getCounter(clientSocket));
+                        sendMsg.clear();
+                        sendMsg.add(unsubmsg);
+                        send(out, logr_debug, sendMsg);
+
+                        relayFlag = false;
+                        flag = false;
+                    }
+                }
+
+                //debug message
+                if (debug) {
+                    FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
+                    BufferedReader br = new BufferedReader(file);
+                    String dCurrentLine;
+                    while ((dCurrentLine = br.readLine()) != null) {
+                        System.out.println(dCurrentLine);
+                    }
+                    Server.setupDebug();
+                    br.close();
+                    file.close();
+                }
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -135,9 +145,7 @@ public class Subscribe {
     }
 
     public static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
-//        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
-        //System.out.println(sendMsg.toString());
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
@@ -151,9 +159,7 @@ public class Subscribe {
     }
 
     public static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
-//        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
-        //System.out.println(sendMsg.toString());
         try {
             out.writeUTF(sendMsg.toString());
             logr_debug.fine("SENT: " + sendMsg.toString());
@@ -219,105 +225,68 @@ public class Subscribe {
         return nul;
     }
 
-    private static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Socket clientSocket, Logger logr_debug) throws InterruptedException{
-    	
-    	//if (relay){
-    		try{
-    	        if (cmd.containsKey("relay")){
-    	        	cmd.put("relay", "false");
-    	        }
-    			for (int i = 0; i < serverList.size(); i++) {
-                    Socket toServer;
-                    String host = serverList.getJSONObject(i).get("hostname").toString();
-                    int newPort = (int) serverList.getJSONObject(i).get("port");
-                    
-                    if (secure) {
-                        System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
-                        SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                        toServer = sslsocketfactory.createSocket(host, newPort);
-                    } else {
-                        toServer = new Socket(host, newPort);
-                    }
-                    
-                    Thread tRelay = new Thread(() -> relayThread(cmd, toServer, clientSocket, logr_debug));
-                    tRelay.start();
-                    
-    			}
-    		
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	//}
+    private static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Logger logr_debug) throws InterruptedException{
+
+        try{
+            if (cmd.containsKey("relay")){
+                cmd.put("relay", "false");
+            }
+            for (int i = 1; i < serverList.size(); i++) {
+                Socket toServer;
+                String host = serverList.getJSONObject(i).get("hostname").toString();
+                int newPort = Integer.parseInt(serverList.getJSONObject(i).get("port").toString());
+
+                if (secure) {
+                    System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+                    SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                    toServer = sslsocketfactory.createSocket(host, newPort);
+                } else {
+                    toServer = new Socket(host, newPort);
+                }
+
+                Thread tRelay = new Thread(() -> relayThread(cmd, toServer, logr_debug));
+                tRelay.start();
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
-	private static void relayThread(JSONObject cmd, Socket toServer, Socket clientSocket, Logger logr_debug) {
+	private static void relayThread(JSONObject cmd, Socket toServer, Logger logr_debug) {
+
         try {
         	String sendData = cmd.toString();
             String receiveData = "";
             
             DataInputStream in = new DataInputStream(toServer.getInputStream());
             DataOutputStream out = new DataOutputStream(toServer.getOutputStream());
-            BufferedReader enterRead = new BufferedReader(new InputStreamReader(System.in));
             out.writeUTF(sendData);
             out.flush();
-            DataOutputStream clientOut = new DataOutputStream(clientSocket.getOutputStream());
-            boolean unSubscribe = false;
-            
-            while (!unSubscribe) {
+
+            while (relayFlag) {
             	while (in.available() > 0) {
                     String read = in.readUTF();
-//                    System.out.println(read);
                     receiveData += read + ",";
-                    //logrSub.fine("RECEIVED:" + read);
+                    logr_debug.fine("RECEIVED:" + read);
                 }
             	
             	if (!receiveData.equals("")) {
                     receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
                     JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
                     JSONObject resp = recv.getJSONObject(0);
-                                        
-                    send(clientOut, logr_debug, recv);
+                    Resource src;
+                    if (resp.has("owner") && resp.has("uri") && resp.has("channel")) {
+                        src = new Resource(resp);
+                        Server.notifySubs(src);
+                    }
                     
                     receiveData = "";
                     recv.clear();
             	}
-            	
-            	if (cmd.containsKey("command")) {
-                    if (cmd.get("command").equals("UNSUBSCRIBE")) {
-                        unSubscribe = true;
-                    }
-                }
             }
-                    
-                    
-                //if (cmd.hasOption("debug")) {
-                    //print logfile
-                    //count = printLogFromFile(count);
-                    //receiveData = "";
-                //} else {
-                    //if (!receiveData.equals("")) {
-                        //receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
-//                System.out.println(receiveData);
-                        //JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-                        //JSONObject resp = recv.getJSONObject(0);
-                        //if (resp.has("response")) {
-                        //    String respTpye = (String) resp.get("response");
-                        //    if (respTpye.equals("error")) {
-                        //        System.out.print("error,");
-                        //        System.out.println(resp.get("errorMessage") + "!");
-                        //    } else {
-                        //        System.out.println("success!");
-                        //        recv.clear();
-                        //        receiveData = "";
-                        //    }
-                        //} else {
-                            //printSubResult(recv);
-                            //receiveData = "";
-                            //recv.clear();
-                        //}
-                    //}
-            //}
  
         } catch (FileNotFoundException e) {
             e.printStackTrace();

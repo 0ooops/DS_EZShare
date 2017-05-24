@@ -8,7 +8,6 @@ package EZShare;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
