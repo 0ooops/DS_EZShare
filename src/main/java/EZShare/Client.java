@@ -582,7 +582,6 @@ public class Client {
                         String unsubMsg = unsubscribeCommand().toString();
                         out.writeUTF(unsubMsg);
                         logrSub.fine("SENT:" + unsubMsg);
-                        System.out.println(unsubMsg);
                         unSubscribe = true;
                     }
                 }
