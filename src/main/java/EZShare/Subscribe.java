@@ -13,6 +13,7 @@ import net.sf.json.JSONSerializer;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -28,9 +29,10 @@ public class Subscribe {
      * @return the response
      */
     static boolean relayFlag = true;
+
     public static void init(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                             boolean secure, Logger logr_debug, String ip,
-                            int port, boolean debug, JSONArray serverList)
+                            int port, boolean debug, JSONArray serverList, HashMap<Socket, JSONObject> relayList)
             throws IOException, InterruptedException {
         DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
         JSONObject response = new JSONObject();
@@ -55,7 +57,7 @@ public class Subscribe {
                 sub.put((String) cmd.get("id"), resTempList);
                 Server.updateSubList(clientSocket, sub);
                 subscribe(cmd,clientSocket, resourceList, secure, logr_debug, resTempList,
-                            relay, ip, port, debug, serverList);
+                            relay, ip, port, debug, serverList, relayList);
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "missing ID");
@@ -71,7 +73,8 @@ public class Subscribe {
 
     private static void subscribe(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                                  boolean secure, Logger logr_debug, ArrayList<JSONObject> resTempList,
-                                 boolean relay, String ip, int port, boolean debug, JSONArray serverList) {
+                                 boolean relay, String ip, int port, boolean debug, JSONArray serverList,
+                                  HashMap<Socket, JSONObject> relayList) {
         boolean flag = true;
 
         try {
@@ -79,21 +82,9 @@ public class Subscribe {
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             JSONArray sendMsg = new JSONArray();
 
-            //System.out.println(selfSubscribe());
-            resTempList.add((JSONObject) cmd.get("resourceTemplate"));
-            for (Resource src : resourceList.values()) {
-                JSONObject m = checkTemplate(src, resTempList);
-
-                if (!m.has("null")) {
-                    sendMsg.add(m);
-                    Server.incrementCounter(clientSocket);
-                }
-
-            }
-            send(out, logr_debug, sendMsg);
-
             // create new threads for relay connection
             if (relay) {
+                relayList.put(clientSocket, cmd);
                 Thread startRelay = new Thread(() -> {
                     try {
                         relay(cmd, serverList, secure, logr_debug);
@@ -228,7 +219,7 @@ public class Subscribe {
         return nul;
     }
 
-    private static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Logger logr_debug) throws InterruptedException{
+    public static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Logger logr_debug) throws InterruptedException{
 
         try{
             if (cmd.containsKey("relay")){
@@ -240,14 +231,20 @@ public class Subscribe {
                 int newPort = Integer.parseInt(serverList.getJSONObject(i).get("port").toString());
 
                 if (secure) {
-                    System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
                     SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                     toServer = sslsocketfactory.createSocket(host, newPort);
+                    System.out.println("Inside secure in relay, this is a secured connection.");
                 } else {
                     toServer = new Socket(host, newPort);
                 }
 
-                Thread tRelay = new Thread(() -> relayThread(cmd, toServer, logr_debug));
+                Thread tRelay = new Thread(() -> {
+                    try {
+                        relayThread(cmd, toServer, logr_debug);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
                 tRelay.start();
 
             }
@@ -258,7 +255,7 @@ public class Subscribe {
     }
 
 
-	private static void relayThread(JSONObject cmd, Socket toServer, Logger logr_debug) {
+	public static void relayThread(JSONObject cmd, Socket toServer, Logger logr_debug) throws IOException {
 
         try {
         	String sendData = cmd.toString();
@@ -299,6 +296,9 @@ public class Subscribe {
             }
  
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            toServer.close();
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();

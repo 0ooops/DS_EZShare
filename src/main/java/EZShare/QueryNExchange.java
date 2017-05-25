@@ -8,6 +8,7 @@ package EZShare;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -150,7 +151,8 @@ public class QueryNExchange {
      * @param serverList
      * @return JSONArray
      */
-    public static JSONArray exchange (JSONObject command, JSONArray serverList) throws SocketException {
+    public static JSONArray exchange (JSONObject command, JSONArray serverList, HashMap<Socket, JSONObject> relayList,
+                                      Logger logr_debug, Boolean secure) throws SocketException {
         JSONArray newList;
         JSONArray msgArray = new JSONArray();
         JSONObject msg = new JSONObject();
@@ -165,6 +167,11 @@ public class QueryNExchange {
                     }
                     if (!serverList.contains(newList.getJSONObject(i))) {
                         serverList.add(newList.getJSONObject(i));
+                        try {
+                            notifyNewServerRelay(secure, newList.getJSONObject(i), relayList, logr_debug);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 msg.put("response", "success");
@@ -241,6 +248,33 @@ public class QueryNExchange {
             receiveData = "connection failed";
         } finally {
             return receiveData;
+        }
+    }
+
+    public static void notifyNewServerRelay(Boolean secureFlag, JSONObject servers, HashMap<Socket, JSONObject> relayList, Logger logr_debug) throws IOException {
+        Socket newRelay;
+        String host = servers.get("hostname").toString();
+        int port = Integer.parseInt(servers.get("port").toString());
+        if (secureFlag) {
+            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            newRelay = sslsocketfactory.createSocket(host, port);
+        } else {
+            newRelay = new Socket(host, port);
+        }
+
+        for(Socket relaySocket : relayList.keySet()) {
+            JSONObject cmd = relayList.get(relaySocket);
+            if (cmd.has("relay")) {
+                cmd.put("relay", false);
+            }
+            Thread newRelayThread = new Thread(() -> {
+                try {
+                    Subscribe.relayThread(cmd, newRelay, logr_debug);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            newRelayThread.start();
         }
     }
 }

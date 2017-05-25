@@ -39,6 +39,8 @@ public class Server {
     private static HashMap<String, Long> clientList = new HashMap<>();
     private static HashMap<Socket, HashMap<String, ArrayList<JSONObject>>> subList = new HashMap<>();
     private static HashMap<Socket, Integer> subCounterList = new HashMap<>();
+    private static HashMap<Socket, JSONObject> secureRelayList = new HashMap<>();
+    private static HashMap<Socket, JSONObject> insecureRelayList = new HashMap<>();
     private static JSONArray securedServerList = new JSONArray();
     private static JSONArray unsecuredServerList = new JSONArray();
     private static KeyList keys = new KeyList();
@@ -185,7 +187,7 @@ public class Server {
             // Create thread for each secured client
             while(true) {
                 SSLSocket sslClient = (SSLSocket)sslServerSocket.accept();
-                Thread tSecured = new Thread(() -> serveClient(sslClient, cmd, securedServerList, true));
+                Thread tSecured = new Thread(() -> serveClient(sslClient, cmd, securedServerList, secureRelayList, true));
                 tSecured.start();
             }
         } catch (IOException e) {
@@ -205,7 +207,7 @@ public class Server {
             // Create thread for each unsecured client
             while(true) {
                 Socket client = server.accept();
-                Thread t = new Thread(() -> serveClient(client, cmd, unsecuredServerList, false));
+                Thread t = new Thread(() -> serveClient(client, cmd, unsecuredServerList, insecureRelayList, false));
                 t.start();
             }
         } catch (IOException e) {
@@ -219,7 +221,7 @@ public class Server {
      * @param client this is the socket connection with client.
      * @param args this is the parsed command from command line input when running server.
      */
-    private static void serveClient(Socket client, CommandLine args, JSONArray serverList, Boolean secure) {
+    private static void serveClient(Socket client, CommandLine args, JSONArray serverList, HashMap<Socket, JSONObject> relayList, Boolean secure) {
         String receiveData;
         JSONObject cmd;
         JSONObject msg = null;
@@ -279,7 +281,7 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList, secure));
                             break;
                         case "EXCHANGE":
-                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList));
+                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure));
                             break;
                         case "SUBSCRIBE":
                             boolean ifDebug = false;
@@ -287,7 +289,10 @@ public class Server {
                                 ifDebug = true;
                             }
                             Subscribe.init(cmd, clientSocket, resourceList, secure,
-                                    logr_debug, getRealIp(), port, ifDebug, serverList);
+                                    logr_debug, getRealIp(), port, ifDebug, serverList, relayList);
+                            if (relayList.containsKey(clientSocket)) {
+                                relayList.remove(clientSocket);
+                            }
                             subList.remove(clientSocket);
                             subCounterList.remove(clientSocket);
                             //System.out.println("sub num after: " + subList.size());
