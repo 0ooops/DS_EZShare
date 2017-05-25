@@ -260,7 +260,12 @@ public class Subscribe {
         try {
         	String sendData = cmd.toString();
             String receiveData = "";
+            String id = "";
             toServer.setSoTimeout(500);
+
+            if (cmd.has("id")) {
+                id = cmd.getString("id");
+            }
             
             DataInputStream in = new DataInputStream(toServer.getInputStream());
             DataOutputStream out = new DataOutputStream(toServer.getOutputStream());
@@ -287,7 +292,7 @@ public class Subscribe {
                     Resource src;
                     if (resp.has("owner") && resp.has("uri") && resp.has("channel")) {
                         src = new Resource(resp);
-                        Server.notifySubs(src);
+                        Server.notifySubsRelay(src, id);
                     }
                     
                     receiveData = "";
