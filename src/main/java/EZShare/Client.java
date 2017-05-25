@@ -621,7 +621,7 @@ public class Client {
                             System.out.println(finalRecv);
                         }
                     }
-
+                    System.exit(0);
                 }
             }
         } catch (IOException e) {
