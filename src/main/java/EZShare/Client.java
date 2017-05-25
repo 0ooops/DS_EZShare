@@ -533,14 +533,20 @@ public class Client {
             out.flush();
             logrSub.fine("SENT:" + sendData);
             int count = -1;
-
+            connection.setSoTimeout(500);
             while (!unSubscribe) {
-                while (in.available() > 0) {
-                    String read = in.readUTF();
+//                 do {
+                String read="";
+                try {
+                     read = in.readUTF();
+                }catch (Exception e){
+                }
 //                    System.out.println(read);
+                if (read.length()!=0){
                     receiveData += read + ",";
                     logrSub.fine("RECEIVED:" + read);
                 }
+//                }while (in.available() > 0);
                 if (cmd.hasOption("debug")) {
                     //print logfile
                     count = printLogFromFile(count);
@@ -575,8 +581,6 @@ public class Client {
                         out.writeUTF(unsubMsg);
                         logrSub.fine("SENT:" + unsubMsg);
                         unSubscribe = true;
-                    } else {
-                        enterRead.read();
                     }
                 }
             }
