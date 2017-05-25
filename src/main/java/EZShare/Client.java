@@ -8,6 +8,8 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
+
+import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
@@ -580,18 +582,30 @@ public class Client {
                         String unsubMsg = unsubscribeCommand().toString();
                         out.writeUTF(unsubMsg);
                         logrSub.fine("SENT:" + unsubMsg);
+                        System.out.println(unsubMsg);
                         unSubscribe = true;
                     }
                 }
             }
             if (unSubscribe) {
-                do {
-                    Thread.sleep(1000);
-                    String read = in.readUTF();
+//                do {
+//                    Thread.sleep(1000);
+                boolean flag = true;
+                while (flag) {
+//                 do {
+                    String read = "";
+                    try {
+                        read = in.readUTF();
+                    } catch (Exception e) {
+                    }
 //                    System.out.println(read);
-                    receiveData += read + ",";
-                    logrSub.fine("RECEIVED:" + read);
-                } while (in.available() > 0);
+                    if (read.length() != 0) {
+                        receiveData += read + ",";
+                        logrSub.fine("RECEIVED:" + read);
+                        flag=false;
+                    }
+                }
+//                } while (in.available() > 0);
                 if (!receiveData.equals("")) {
                     if (cmd.hasOption("debug")) {
                         //print logfile
@@ -612,8 +626,6 @@ public class Client {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
