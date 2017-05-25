@@ -143,8 +143,8 @@ public class Subscribe {
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
+                logr_debug.fine("SENT: " + sendMsg.toString());
             }
-            logr_debug.fine("SENT: " + sendMsg.toString());
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -261,7 +261,7 @@ public class Subscribe {
         	String sendData = cmd.toString();
             String receiveData = "";
             toServer.setSoTimeout(500);
-            
+
             DataInputStream in = new DataInputStream(toServer.getInputStream());
             DataOutputStream out = new DataOutputStream(toServer.getOutputStream());
             out.writeUTF(sendData);
@@ -279,7 +279,7 @@ public class Subscribe {
                     receiveData += read + ",";
                     logr_debug.fine("RECEIVED:" + read);
                 }
-            	
+
             	if (!receiveData.equals("")) {
                     receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
                     JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
@@ -289,12 +289,12 @@ public class Subscribe {
                         src = new Resource(resp);
                         Server.notifySubs(src);
                     }
-                    
+
                     receiveData = "";
                     recv.clear();
             	}
             }
- 
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (SocketTimeoutException e) {
@@ -303,7 +303,7 @@ public class Subscribe {
         } catch (IOException e) {
             e.printStackTrace();
 		}
-    
+
 	}
 
 }
