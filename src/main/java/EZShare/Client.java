@@ -13,8 +13,10 @@ import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
+
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
+
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
@@ -220,15 +222,28 @@ public class Client {
         String[] sServers = servers.split(",");
         for (String sServer : sServers) {
             String[] tempServer = sServer.split(":");
-            JSONObject serv = new JSONObject();
-            serv.put("hostname", tempServer[0]);
-            String exPort = tempServer[1];
-            if (exPort.length() > 5) {
-                System.out.println("pls input a valid port");
+            if (tempServer.length != 2) {
+                System.out.println("please give valid servers");
                 System.exit(1);
+            } else {
+                JSONObject serv = new JSONObject();
+                serv.put("hostname", tempServer[0]);
+                String exPort = tempServer[1];
+                if (exPort.length() > 5) {
+                    System.out.println("pls input a valid port");
+                    System.exit(1);
+                } else {
+                    try {
+                        int intPort = Integer.parseInt(exPort);
+                        serv.put("port", intPort);
+                        serverList.add(serv);
+                    } catch (NumberFormatException E) {
+                        System.out.println("please give a valid port number~");
+                        System.exit(1);
+                    }
+                }
             }
-            serv.put("port", tempServer[1]);
-            serverList.add(serv);
+
         }
         exchange.put("command", "EXCHANGE");
         exchange.put("serverList", serverList);
@@ -538,45 +553,45 @@ public class Client {
             connection.setSoTimeout(500);
             while (!unSubscribe) {
 //                 do {
-                String read="";
+                String read = "";
                 try {
-                     read = in.readUTF();
-                }catch (Exception e){
+                    read = in.readUTF();
+                } catch (Exception e) {
                 }
 //                    System.out.println(read);
-                if (read.length()!=0){
+                if (read.length() != 0) {
                     receiveData += read + ",";
                     logrSub.fine("RECEIVED:" + read);
-                }
+
 //                }while (in.available() > 0);
-                if (cmd.hasOption("debug")) {
-                    //print logfile
-                    count = printLogFromFile(count);
-                    receiveData = "";
-                } else {
-                    if (!receiveData.equals("")) {
-                        receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
+                    if (cmd.hasOption("debug")) {
+                        //print logfile
+                        count = printLogFromFile(count);
+                        receiveData = "";
+                    } else {
+                        if (!receiveData.equals("")) {
+                            receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
 //                System.out.println(receiveData);
-                        JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
-                        JSONObject resp = recv.getJSONObject(0);
-                        if (resp.has("response")) {
-                            String respTpye = (String) resp.get("response");
-                            if (respTpye.equals("error")) {
-                                System.out.print("error,");
-                                System.out.println(resp.get("errorMessage") + "!");
+                            JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
+                            JSONObject resp = recv.getJSONObject(0);
+                            if (resp.has("response")) {
+                                String respTpye = (String) resp.get("response");
+                                if (respTpye.equals("error")) {
+                                    System.out.print("error,");
+                                    System.out.println(resp.get("errorMessage") + "!");
+                                } else {
+                                    System.out.println("success!");
+                                    recv.clear();
+                                    receiveData = "";
+                                }
                             } else {
-                                System.out.println("success!");
-                                recv.clear();
+                                printSubResult(recv);
                                 receiveData = "";
+                                recv.clear();
                             }
-                        } else {
-                            printSubResult(recv);
-                            receiveData = "";
-                            recv.clear();
                         }
                     }
                 }
-
                 if (enterRead.ready()) {
                     if (enterRead.read() == '\n') {
                         String unsubMsg = unsubscribeCommand().toString();
@@ -601,7 +616,7 @@ public class Client {
                     if (read.length() != 0) {
                         receiveData += read + ",";
                         logrSub.fine("RECEIVED:" + read);
-                        flag=false;
+                        flag = false;
                     }
                 }
 //                } while (in.available() > 0);
