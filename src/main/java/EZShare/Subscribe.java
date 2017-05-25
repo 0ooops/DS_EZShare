@@ -104,12 +104,16 @@ public class Subscribe {
                 startRelay.start();
             }
 
+            clientSocket.setSoTimeout(500);
             while (flag) {
                 //check if unsubscribe
-                sleep(2000);
-                if (in.available() > 0) {
-                    String recv = in.readUTF();
-                    System.out.println(recv);
+                String recv = "";
+                try {
+                    recv = in.readUTF();
+                } catch(Exception e) {
+                }
+                if (recv.length() != 0) {
+
                     if (recv.contains("UNSUBSCRIBE")) {
                         logr_debug.fine("RECEIVED: " + recv);
                         JSONObject unsubmsg = new JSONObject();
@@ -121,25 +125,24 @@ public class Subscribe {
                         relayFlag = false;
                         flag = false;
                     }
+
+                    //debug message
+                    if (debug) {
+                        FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
+                        BufferedReader br = new BufferedReader(file);
+                        String dCurrentLine;
+                        while ((dCurrentLine = br.readLine()) != null) {
+                            System.out.println(dCurrentLine);
+                        }
+                        Server.setupDebug();
+                        br.close();
+                        file.close();
+                    }
                 }
 
-                //debug message
-                if (debug) {
-                    FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
-                    BufferedReader br = new BufferedReader(file);
-                    String dCurrentLine;
-                    while ((dCurrentLine = br.readLine()) != null) {
-                        System.out.println(dCurrentLine);
-                    }
-                    Server.setupDebug();
-                    br.close();
-                    file.close();
-                }
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -260,6 +263,7 @@ public class Subscribe {
         try {
         	String sendData = cmd.toString();
             String receiveData = "";
+            toServer.setSoTimeout(500);
             
             DataInputStream in = new DataInputStream(toServer.getInputStream());
             DataOutputStream out = new DataOutputStream(toServer.getOutputStream());
@@ -267,8 +271,14 @@ public class Subscribe {
             out.flush();
 
             while (relayFlag) {
-            	while (in.available() > 0) {
-                    String read = in.readUTF();
+
+                String read="";
+                try {
+                    read = in.readUTF();
+                }catch (Exception e){
+                }
+
+                if (read.length()!=0){
                     receiveData += read + ",";
                     logr_debug.fine("RECEIVED:" + read);
                 }
