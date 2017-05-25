@@ -490,6 +490,28 @@ public class Server {
         }
     }
 
+    public static void notifySubsRelay(Resource src, String id) {
+        JSONObject checkedSrc = new JSONObject();
+        JSONArray sendMsg = new JSONArray();
+        try {
+            for (Socket clientSocket : subList.keySet()) {
+                if (subList.get(clientSocket).containsKey(id)) {
+                    DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+                    ArrayList<JSONObject> srcTemp = subList.get(clientSocket).get(id);
+                    checkedSrc = Subscribe.checkTemplate(src, srcTemp);
+                    if (!checkedSrc.has("null")) {
+                        sendMsg.add(checkedSrc);
+                        Server.incrementCounter(clientSocket);
+                        Subscribe.send(out, logr_debug, sendMsg);
+                        sendMsg.clear();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static int getCounter(Socket clientSocket) {
         return subCounterList.get(clientSocket);
     }

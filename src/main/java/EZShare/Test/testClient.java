@@ -1,4 +1,4 @@
-package EZShare;
+package EZShare.Test;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -6,23 +6,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.Socket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 public class testClient {
     public static void main(String[] arstring) {
         try {
-
-            //Location of the Java keystore file containing the collection of
-            //certificates trusted by this application (trust store).
-            System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
-
-
-            //System.setProperty("javax.net.debug","all");
-
-            //Create SSL socket and connect it to the remote server
-            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-            SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket("localhost", 3781);
+            Socket connection = new Socket("localhost", 8080);
 
             //Create buffered reader to read input from the console
             InputStream inputstream = System.in;
@@ -30,17 +21,31 @@ public class testClient {
             BufferedReader bufferedreader = new BufferedReader(inputstreamreader);
 
             //Create buffered writer to send data to the server
-            OutputStream outputstream = sslsocket.getOutputStream();
+            OutputStream outputstream = connection.getOutputStream();
             OutputStreamWriter outputstreamwriter = new OutputStreamWriter(outputstream);
             BufferedWriter bufferedwriter = new BufferedWriter(outputstreamwriter);
 
             String string = null;
             //Read line from the console
-            while ((string = bufferedreader.readLine()) != null) {
+            Boolean flag = true;
+            while (flag) {
+                if ((string = bufferedreader.readLine()) != null) {
+                    System.out.println(string);
+                    String[] array = string.split("");
+                    for (int i = 0; i < array.length; i++) {
+                        System.out.println(array[i]);
+                        if (array[i].equals('\n')) {
+                            System.out.println("Break!");
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
                 //Send data to the server
-                bufferedwriter.write(string + '\n');
+                bufferedwriter.write("inside");
                 bufferedwriter.flush();
             }
+            System.out.println("out");
         } catch (Exception exception) {
             exception.printStackTrace();
         }
