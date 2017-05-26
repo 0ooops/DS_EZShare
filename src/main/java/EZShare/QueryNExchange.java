@@ -152,7 +152,7 @@ public class QueryNExchange {
      * @return JSONArray
      */
     public static JSONArray exchange (JSONObject command, JSONArray serverList, HashMap<Socket, JSONObject> relayList,
-                                      Logger logr_debug, Boolean secure) throws SocketException {
+                                      Logger logr_debug, Boolean secure, String ip, int port, Boolean debug) throws SocketException {
         JSONArray newList;
         JSONArray msgArray = new JSONArray();
         JSONObject msg = new JSONObject();
@@ -168,7 +168,7 @@ public class QueryNExchange {
                     if (!serverList.contains(newList.getJSONObject(i))) {
                         serverList.add(newList.getJSONObject(i));
                         try {
-                            notifyNewServerRelay(secure, newList.getJSONObject(i), relayList, logr_debug);
+                            notifyNewServerRelay(secure, newList.getJSONObject(i), relayList, logr_debug, ip, port, debug);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -251,7 +251,8 @@ public class QueryNExchange {
         }
     }
 
-    public static void notifyNewServerRelay(Boolean secureFlag, JSONObject servers, HashMap<Socket, JSONObject> relayList, Logger logr_debug) throws IOException {
+    public static void notifyNewServerRelay(Boolean secureFlag, JSONObject servers, HashMap<Socket, JSONObject> relayList,
+                                            Logger logr_debug, String ip, int InitPort, Boolean debug) throws IOException {
         Socket newRelay;
         String host = servers.get("hostname").toString();
         int port = Integer.parseInt(servers.get("port").toString());
@@ -269,7 +270,7 @@ public class QueryNExchange {
             }
             Thread newRelayThread = new Thread(() -> {
                 try {
-                    Subscribe.relayThread(cmd, newRelay, logr_debug);
+                    Subscribe.relayThread(cmd, newRelay, logr_debug, ip, InitPort, debug);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

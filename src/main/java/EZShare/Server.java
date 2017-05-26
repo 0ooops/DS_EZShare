@@ -257,6 +257,10 @@ public class Server {
                     msg.put("errorMessage", "missing or incorrect type for command");
                     sendMsg.add(msg);
                 } else {
+                    boolean ifDebug = false;
+                    if (args.hasOption("debug")) {
+                        ifDebug = true;
+                    }
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),
@@ -281,13 +285,9 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList, secure));
                             break;
                         case "EXCHANGE":
-                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure));
+                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure, getRealIp(), port, ifDebug));
                             break;
                         case "SUBSCRIBE":
-                            boolean ifDebug = false;
-                            if (args.hasOption("debug")) {
-                                ifDebug = true;
-                            }
                             Subscribe.init(cmd, clientSocket, resourceList, secure,
                                     logr_debug, getRealIp(), port, ifDebug, serverList, relayList);
                             if (relayList.containsKey(clientSocket)) {
@@ -295,17 +295,6 @@ public class Server {
                             }
                             subList.remove(clientSocket);
                             subCounterList.remove(clientSocket);
-                            //System.out.println("sub num after: " + subList.size());
-                            /*
-                            if(m.get("response").equals("success")) {
-                                String id = (String) m.get("id");
-                                JSONObject resTemp = (JSONObject) m.get("resourceTemplate");
-
-                                subList.put(clientSocket, new HashMap<>());
-                                subList.get(clientSocket).put(id, resTemp);
-                                System.out.println("sub num: " + subList.size());
-                                Subscribe.subscribe(cmd,clientSocket, resourceList, secure, logr_debug);
-                            }*/
                             break;
                         default:
                             msg.put("response", "error");
@@ -337,14 +326,8 @@ public class Server {
             clientSocket.close();
             logr_debug.fine("The connection with " + getAddress + ":" +
                     clientSocket.getPort() + " has been closed.");
-            if (args.hasOption("debug")){;// && !cmd.get("command").toString().equals("SUBSCRIBE")) {
-                BufferedReader brDebug = new BufferedReader(
-                        new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
-                String dCurrentLine;
-                while ((dCurrentLine = brDebug.readLine()) != null) {
-                    System.out.println(dCurrentLine);
-                }
-                setupDebug();
+            if (args.hasOption("debug")){
+                Subscribe.printDebugLog(getRealIp(), port);
             }
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();

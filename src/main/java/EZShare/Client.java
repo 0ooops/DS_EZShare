@@ -8,20 +8,16 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
-
 import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
-
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
-
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -530,7 +526,6 @@ public class Client {
      */
     private static void sendSubMessage(JSONObject sendJson, CommandLine cmd) {
         String sendData = sendJson.toString();
-//        ClientThread clientThread = new ClientThread(host,port,sendData);
         String receiveData = "";
         boolean unSubscribe = false;
         Socket connection;
@@ -602,17 +597,13 @@ public class Client {
                 }
             }
             if (unSubscribe) {
-//                do {
-//                    Thread.sleep(1000);
                 boolean flag = true;
                 while (flag) {
-//                 do {
                     String read = "";
                     try {
                         read = in.readUTF();
                     } catch (Exception e) {
                     }
-//                    System.out.println(read);
                     if (read.length() != 0) {
                         receiveData += read + ",";
                         logrSub.fine("RECEIVED:" + read);

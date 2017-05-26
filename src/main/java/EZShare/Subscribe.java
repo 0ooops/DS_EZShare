@@ -7,6 +7,7 @@ package EZShare;
  * @date: May, 2017
  */
 
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -28,7 +29,7 @@ public class Subscribe {
      * @param cmd JSON command
      * @return the response
      */
-    static boolean relayFlag = true;
+    static HashMap<String, Boolean> relayFlag = new HashMap<>();
 
     public static void init(JSONObject cmd, Socket clientSocket, HashMap<Integer, Resource> resourceList,
                             boolean secure, Logger logr_debug, String ip,
@@ -51,6 +52,7 @@ public class Subscribe {
                 if (cmd.containsKey("relay")) {
                     if (cmd.get("relay").equals("true")) {
                         relay = true;
+                        relayFlag.put(cmd.get("id").toString(), true);
                     }
                 }
                 HashMap<String, ArrayList<JSONObject>> sub = new HashMap<>();
@@ -87,7 +89,7 @@ public class Subscribe {
                 relayList.put(clientSocket, cmd);
                 Thread startRelay = new Thread(() -> {
                     try {
-                        relay(cmd, serverList, secure, logr_debug);
+                        relay(cmd, serverList, secure, logr_debug, ip, port, debug);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -106,28 +108,22 @@ public class Subscribe {
                 if (recv.length() != 0) {
 
                     if (recv.contains("UNSUBSCRIBE")) {
+                        JSONObject clientUnsub = JSONObject.fromObject(recv);
                         logr_debug.fine("RECEIVED: " + recv);
                         JSONObject unsubmsg = new JSONObject();
                         unsubmsg.put("resultSize", Server.getCounter(clientSocket));
                         sendMsg.clear();
                         sendMsg.add(unsubmsg);
                         send(out, logr_debug, sendMsg);
-
-                        relayFlag = false;
+                        if (clientUnsub.has("id")) {
+                            relayFlag.put(clientUnsub.get("id").toString(), false);
+                        }
                         flag = false;
                     }
 
                     //debug message
                     if (debug) {
-                        FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
-                        BufferedReader br = new BufferedReader(file);
-                        String dCurrentLine;
-                        while ((dCurrentLine = br.readLine()) != null) {
-                            System.out.println(dCurrentLine);
-                        }
-                        Server.setupDebug();
-                        br.close();
-                        file.close();
+                        printDebugLog(ip, port);
                     }
                 }
 
@@ -219,7 +215,7 @@ public class Subscribe {
         return nul;
     }
 
-    public static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Logger logr_debug) throws InterruptedException{
+    public static void relay(JSONObject cmd, JSONArray serverList, boolean secure, Logger logr_debug, String ip, int port, Boolean debug) throws InterruptedException{
 
         try{
             if (cmd.containsKey("relay")){
@@ -233,14 +229,13 @@ public class Subscribe {
                 if (secure) {
                     SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                     toServer = sslsocketfactory.createSocket(host, newPort);
-                    System.out.println("Inside secure in relay, this is a secured connection.");
                 } else {
                     toServer = new Socket(host, newPort);
                 }
 
                 Thread tRelay = new Thread(() -> {
                     try {
-                        relayThread(cmd, toServer, logr_debug);
+                        relayThread(cmd, toServer, logr_debug, ip, port, debug);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -255,7 +250,7 @@ public class Subscribe {
     }
 
 
-	public static void relayThread(JSONObject cmd, Socket toServer, Logger logr_debug) throws IOException {
+	public static void relayThread(JSONObject cmd, Socket toServer, Logger logr_debug, String ip, int port, Boolean debug) throws IOException {
 
         try {
         	String sendData = cmd.toString();
@@ -272,7 +267,7 @@ public class Subscribe {
             out.writeUTF(sendData);
             out.flush();
 
-            while (relayFlag) {
+            while (relayFlag.get(id)) {
 
                 String read="";
                 try {
@@ -280,9 +275,19 @@ public class Subscribe {
                 }catch (Exception e){
                 }
 
+                //debug message
+                if (debug) {
+                    printDebugLog(ip, port);
+                }
+
                 if (read.length()!=0){
                     receiveData += read + ",";
                     logr_debug.fine("RECEIVED:" + read);
+                }
+
+                //debug message
+                if (debug) {
+                    printDebugLog(ip, port);
                 }
 
             	if (!receiveData.equals("")) {
@@ -298,7 +303,19 @@ public class Subscribe {
                     receiveData = "";
                     recv.clear();
             	}
+
+                //debug message
+                if (debug) {
+                    printDebugLog(ip, port);
+                }
             }
+
+            JSONObject unsub = new JSONObject();
+            unsub.put("id", id);
+            unsub.put("command", "UNSUBSCRIBE");
+            out.writeUTF(unsub.toString());
+            logr_debug.fine("SENT:" + unsub.toString());
+            toServer.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -310,5 +327,16 @@ public class Subscribe {
 		}
 
 	}
+	public static void printDebugLog (String ip, int port) throws IOException {
+        FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
+        BufferedReader br = new BufferedReader(file);
+        String dCurrentLine;
+        while ((dCurrentLine = br.readLine()) != null) {
+            System.out.println(dCurrentLine);
+        }
+        Server.setupDebug();
+        br.close();
+        file.close();
+    }
 
 }
