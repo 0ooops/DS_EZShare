@@ -8,6 +8,8 @@ package EZShare;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -68,6 +70,7 @@ public class QueryNExchange {
      * @return JSONArray
      */
     public static JSONArray selfQuery(JSONObject command, HashMap<Integer, Resource> resourceList) {
+        System.out.println(command);
         JSONArray queryList = new JSONArray();
         JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
         JSONArray cmdTagsJson = cmd.getJSONArray("tags");
@@ -89,9 +92,14 @@ public class QueryNExchange {
                 owner = false;
             }
             if (cmdTags.length != 0 && !cmdTags[0].equals("")) {
+                ArrayList<String> srcTags = src.getTags();
                 for(int j = 0; j < cmdTags.length; j++) {
-                    if (!src.getTags().contains(cmdTags[j])) {
-                        tags = false;
+                    tags = false;
+                    for (int k = 0; k < srcTags.size(); k++) {
+                        if (cmdTags[j].substring(1, cmdTags[j].length() - 1).equals(srcTags.get(k))) {
+                            tags = true;
+                            break;
+                        }
                     }
                 }
             }

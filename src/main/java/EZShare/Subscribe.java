@@ -196,9 +196,14 @@ public class Subscribe {
                 owner = false;
             }
             if (cmdTags.length != 0 && !cmdTags[0].equals("")) {
-                for (int j = 0; j < cmdTags.length; j++) {
-                    if (!src.getTags().contains(cmdTags[j])) {
-                        tags = false;
+                ArrayList<String> srcTags = src.getTags();
+                for(int j = 0; j < cmdTags.length; j++) {
+                    tags = false;
+                    for (int k = 0; k < srcTags.size(); k++) {
+                        if (cmdTags[j].substring(1, cmdTags[j].length() - 1).equals(srcTags.get(k))) {
+                            tags = true;
+                            break;
+                        }
                     }
                 }
             }
