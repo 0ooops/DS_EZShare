@@ -176,7 +176,7 @@ public class QueryNExchange {
                     if (!serverList.contains(newList.getJSONObject(i))) {
                         serverList.add(newList.getJSONObject(i));
                         try {
-                            notifyNewServerRelay(secure, newList.getJSONObject(i), relayList, logr_debug, ip, port, debug);
+                            Subscribe.notifyNewServerRelay(secure, newList.getJSONObject(i), relayList, logr_debug, ip, port, debug);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -256,34 +256,6 @@ public class QueryNExchange {
             receiveData = "connection failed";
         } finally {
             return receiveData;
-        }
-    }
-
-    public static void notifyNewServerRelay(Boolean secureFlag, JSONObject servers, HashMap<Socket, JSONObject> relayList,
-                                            Logger logr_debug, String ip, int InitPort, Boolean debug) throws IOException {
-        Socket newRelay;
-        String host = servers.get("hostname").toString();
-        int port = Integer.parseInt(servers.get("port").toString());
-        if (secureFlag) {
-            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-            newRelay = sslsocketfactory.createSocket(host, port);
-        } else {
-            newRelay = new Socket(host, port);
-        }
-
-        for(Socket relaySocket : relayList.keySet()) {
-            JSONObject cmd = relayList.get(relaySocket);
-            if (cmd.has("relay")) {
-                cmd.put("relay", false);
-            }
-            Thread newRelayThread = new Thread(() -> {
-                try {
-                    Subscribe.relayThread(cmd, newRelay, logr_debug, ip, InitPort, debug);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            newRelayThread.start();
         }
     }
 }
