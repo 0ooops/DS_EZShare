@@ -547,26 +547,21 @@ public class Client {
             int count = -1;
             connection.setSoTimeout(500);
             while (!unSubscribe) {
-//                 do {
                 String read = "";
                 try {
                     read = in.readUTF();
                 } catch (Exception e) {
                 }
-//                    System.out.println(read);
                 if (read.length() != 0) {
                     receiveData += read + ",";
                     logrSub.fine("RECEIVED:" + read);
 
-//                }while (in.available() > 0);
                     if (cmd.hasOption("debug")) {
-                        //print logfile
                         count = printLogFromFile(count);
                         receiveData = "";
                     } else {
                         if (!receiveData.equals("")) {
                             receiveData = "[" + receiveData.substring(0, receiveData.length() - 1) + "]";
-//                System.out.println(receiveData);
                             JSONArray recv = (JSONArray) JSONSerializer.toJSON(receiveData);
                             JSONObject resp = recv.getJSONObject(0);
                             if (resp.has("response")) {
