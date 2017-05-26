@@ -1,53 +1,71 @@
 package EZShare.Test;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+
+import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 public class testClient {
     public static void main(String[] arstring) {
+        Socket connection = null;
         try {
-            Socket connection = new Socket("localhost", 8080);
+            connection = new Socket("localhost", 8080);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        DataInputStream in = null;
+        try {
+            in = new DataInputStream(connection.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        DataOutputStream out = null;
+        try {
+            out = new DataOutputStream(connection.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            connection.setSoTimeout(500);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        Boolean unSub = false;
 
-            //Create buffered reader to read input from the console
-            InputStream inputstream = System.in;
-            InputStreamReader inputstreamreader = new InputStreamReader(inputstream);
-            BufferedReader bufferedreader = new BufferedReader(inputstreamreader);
-
-            //Create buffered writer to send data to the server
-            OutputStream outputstream = connection.getOutputStream();
-            OutputStreamWriter outputstreamwriter = new OutputStreamWriter(outputstream);
-            BufferedWriter bufferedwriter = new BufferedWriter(outputstreamwriter);
-
-            String string = null;
-            //Read line from the console
-            Boolean flag = true;
-            while (flag) {
-                if ((string = bufferedreader.readLine()) != null) {
-                    System.out.println(string);
-                    String[] array = string.split("");
-                    for (int i = 0; i < array.length; i++) {
-                        System.out.println(array[i]);
-                        if (array[i].equals('\n')) {
-                            System.out.println("Break!");
-                            flag = false;
-                            break;
+        while (!unSub) {
+            String read = "";
+            try {
+                read = in.readUTF();
+            } catch (Exception e) {
+            }
+//                    System.out.println(read);
+            try {
+                if (console.ready()) {
+                    try {
+                        if (console.read() == '\n') {
+                            String unsubMsg = "unsubscribe";
+                            out.writeUTF(unsubMsg);
+                            System.out.println("inside the unsub procedure, the socket will be closed");
+                            unSub = true;
                         }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-                //Send data to the server
-                bufferedwriter.write("inside");
-                bufferedwriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            System.out.println("out");
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        }
+        try {
+            connection.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
