@@ -54,6 +54,7 @@ public class Server {
     private static int port = 8080;
     private static int securedPort = 3781;  //Default Secured Port
     private static String secret;
+    private static Boolean debug = false;
 
     public static void main(String[] args) {
         try{
@@ -133,8 +134,10 @@ public class Server {
             }
 
             if (cmd.hasOption("debug")) {
+                debug = true;
                 setupDebug();
                 logr_debug.info("Setting debug on");
+                Subscribe.printDebugLog(getRealIp(), port);
             }
 
             // Add current host and secured port to serverList.
@@ -234,6 +237,9 @@ public class Server {
             String getAddress = clientSocket.getInetAddress().getHostAddress();
             logr_debug.fine("The connection with " + getAddress + ":" +
                     clientSocket.getPort() + " has been established.");
+            if (debug) {
+                Subscribe.printDebugLog(getRealIp(), port);
+            }
             Long time = date.getTime();
             if (clientList.containsKey(getAddress)) {
                 if (time - clientList.get(getAddress) < connectionSecond * 1000) {
@@ -241,6 +247,9 @@ public class Server {
                     clientSocket.close();
                     logr_debug.fine("The connection with " + getAddress + ":" +
                             clientSocket.getPort() + " has been closed by server.");
+                    if (debug) {
+                        Subscribe.printDebugLog(getRealIp(), port);
+                    }
                 }
             }
             clientList.put(getAddress, time);
@@ -251,16 +260,15 @@ public class Server {
             do {
                 receiveData = in.readUTF();
                 logr_debug.fine("RECEIVED: " + receiveData);
+                if (debug) {
+                    Subscribe.printDebugLog(getRealIp(), port);
+                }
                 cmd = JSONObject.fromObject(receiveData);
                 if (!cmd.containsKey("command")) {
                     msg.put("response", "error");
                     msg.put("errorMessage", "missing or incorrect type for command");
                     sendMsg.add(msg);
                 } else {
-                    boolean ifDebug = false;
-                    if (args.hasOption("debug")) {
-                        ifDebug = true;
-                    }
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),
@@ -285,11 +293,11 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.query(cmd, resourceList, serverList, secure));
                             break;
                         case "EXCHANGE":
-                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure, getRealIp(), port, ifDebug));
+                            sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure, getRealIp(), port, debug));
                             break;
                         case "SUBSCRIBE":
                             Subscribe.init(cmd, clientSocket, resourceList, secure,
-                                    logr_debug, getRealIp(), port, ifDebug, serverList, relayList);
+                                    logr_debug, getRealIp(), port, debug, serverList, relayList);
                             if (relayList.containsKey(clientSocket)) {
                                 relayList.remove(clientSocket);
                             }
@@ -305,6 +313,9 @@ public class Server {
                 }
                 if (cmd.containsKey("command") && !cmd.get("command").toString().equals("SUBSCRIBE")) {
                     logr_debug.fine("SENT: " + sendMsg.toString());
+                    if (debug) {
+                        Subscribe.printDebugLog(getRealIp(), port);
+                    }
                     for (int i = 0; i < sendMsg.size(); i++) {
                         out.writeUTF(sendMsg.getJSONObject(i).toString());
                     }
@@ -326,7 +337,7 @@ public class Server {
             clientSocket.close();
             logr_debug.fine("The connection with " + getAddress + ":" +
                     clientSocket.getPort() + " has been closed.");
-            if (args.hasOption("debug")){
+            if (debug) {
                 Subscribe.printDebugLog(getRealIp(), port);
             }
         } catch (InterruptedException | IOException e) {
@@ -394,14 +405,8 @@ public class Server {
                     if (receiveData.equals("connection failed")) {
                         serverList.remove(select);
                     }
-                    if (args.hasOption("debug")) {
-                        BufferedReader brDebug = new BufferedReader(
-                                new FileReader("./debug_" + getRealIp() + "_" + port +".log"));
-                        String dCurrentLine;
-                        while ((dCurrentLine = brDebug.readLine()) != null) {
-                            System.out.println(dCurrentLine);
-                        }
-                        setupDebug();
+                    if (debug) {
+                        Subscribe.printDebugLog(getRealIp(), port);
                     }
                 }
                 sleep(exchangeSecond * 1000);
@@ -463,7 +468,7 @@ public class Server {
                     if (!checkedSrc.has("null")) {
                         sendMsg.add(checkedSrc);
                         Server.incrementCounter(clientSocket);
-                        Subscribe.send(out, logr_debug, sendMsg);
+                        Subscribe.send(out, logr_debug, sendMsg, getRealIp(), port, debug);
                         sendMsg.clear();
                     }
                 }
@@ -485,7 +490,7 @@ public class Server {
                     if (!checkedSrc.has("null")) {
                         sendMsg.add(checkedSrc);
                         Server.incrementCounter(clientSocket);
-                        Subscribe.send(out, logr_debug, sendMsg);
+                        Subscribe.send(out, logr_debug, sendMsg, getRealIp(), port, debug);
                         sendMsg.clear();
                     }
                 }

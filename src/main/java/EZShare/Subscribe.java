@@ -46,7 +46,7 @@ public class Subscribe {
             if (cmd.containsKey("id")) {
                 response.put("response", "success");
                 response.put("id", cmd.get("id"));
-                send(out, logr_debug, response);
+                send(out, logr_debug, response, ip, port, debug);
                 resTempList.add((JSONObject) cmd.get("resourceTemplate"));
                 sleep(2000);
                 if (cmd.containsKey("relay")) {
@@ -63,12 +63,12 @@ public class Subscribe {
             } else {
                 response.put("response", "error");
                 response.put("errorMessage", "missing ID");
-                send(out, logr_debug, response);
+                send(out, logr_debug, response, ip, port, debug);
             }
         } else {
             response.put("response", "error");
             response.put("errorMessage", "missing resourceTemplate");
-            send(out, logr_debug, response);
+            send(out, logr_debug, response, ip, port, debug);
         }
     }
 
@@ -110,11 +110,14 @@ public class Subscribe {
                     if (recv.contains("UNSUBSCRIBE")) {
                         JSONObject clientUnsub = JSONObject.fromObject(recv);
                         logr_debug.fine("RECEIVED: " + recv);
+                        if (debug) {
+                            Subscribe.printDebugLog(ip, port);
+                        }
                         JSONObject unsubmsg = new JSONObject();
                         unsubmsg.put("resultSize", Server.getCounter(clientSocket));
                         sendMsg.clear();
                         sendMsg.add(unsubmsg);
-                        send(out, logr_debug, sendMsg);
+                        send(out, logr_debug, sendMsg, ip, port, debug);
                         if (clientUnsub.has("id")) {
                             relayFlag.put(clientUnsub.get("id").toString(), false);
                         }
@@ -134,12 +137,15 @@ public class Subscribe {
         }
     }
 
-    public static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg) {
+    public static void send(DataOutputStream out, Logger logr_debug, JSONArray sendMsg, String ip, int port, Boolean debug) {
 
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
                 logr_debug.fine("SENT: " + sendMsg.toString());
+                if (debug) {
+                    Subscribe.printDebugLog(ip, port);
+                }
             }
             out.flush();
         } catch (IOException e) {
@@ -148,11 +154,14 @@ public class Subscribe {
 
     }
 
-    public static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg) {
+    public static void send(DataOutputStream out, Logger logr_debug, JSONObject sendMsg, String ip, int port, Boolean debug) {
 
         try {
             out.writeUTF(sendMsg.toString());
             logr_debug.fine("SENT: " + sendMsg.toString());
+            if (debug) {
+                Subscribe.printDebugLog(ip, port);
+            }
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
