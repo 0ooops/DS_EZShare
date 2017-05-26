@@ -9,6 +9,7 @@ package EZShare;
 
 import org.apache.commons.cli.*;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
@@ -512,10 +513,13 @@ public class Client {
             out.close();
             connection.close();
         } catch (InterruptedException e) {
-            System.out.println("bad things always happen,pls try again.");
+            System.out.println("bad things always happen, pls try again.");
+        } catch (FileNotFoundException e) {
+            System.out.println("file not found");
+        } catch (UnknownHostException e) {
+            System.out.println("Unknown Host");
         } catch (IOException e) {
-            System.out.println("connection fail");
-            System.exit(1);
+            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
         }
     }
 
