@@ -8,6 +8,8 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
+
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
@@ -629,8 +631,12 @@ public class Client {
                     System.exit(0);
                 }
             }
+        } catch (SocketException e) {
+            System.out.println("fail to connect");
+        } catch (UnknownHostException e) {
+            System.out.println("unknown host");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("io exception");
         }
     }
 
