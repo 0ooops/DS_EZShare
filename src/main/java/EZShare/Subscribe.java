@@ -11,7 +11,10 @@ package EZShare;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
+import org.apache.commons.lang.RandomStringUtils;
+
 import javax.net.ssl.SSLSocketFactory;
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -235,6 +238,7 @@ public class Subscribe {
             if (cmd.containsKey("relay")){
                 cmd.put("relay", "false");
             }
+
             for (int i = 1; i < serverList.size(); i++) {
                 Socket toServer;
                 String host = serverList.getJSONObject(i).get("hostname").toString();
@@ -279,12 +283,17 @@ public class Subscribe {
             DataInputStream in = new DataInputStream(toServer.getInputStream());
             DataOutputStream out = new DataOutputStream(toServer.getOutputStream());
             out.writeUTF(sendData);
+            logr_debug.fine("SEND:" + sendData);
+            if (debug) {
+                printDebugLog(ip, port);
+            }
             out.flush();
 
             while (relayFlag.get(id)) {
 
-                String read="";
+                String read = "";
                 try {
+                    Thread.sleep(1000);
                     read = in.readUTF();
                 }catch (Exception e){
                 }
@@ -339,8 +348,8 @@ public class Subscribe {
         } catch (IOException e) {
             e.printStackTrace();
 		}
-
 	}
+
 	public static void printDebugLog (String ip, int port) throws IOException {
         FileReader file = new FileReader("./debug_" + ip + "_" + port +".log");
         BufferedReader br = new BufferedReader(file);
@@ -351,6 +360,42 @@ public class Subscribe {
         Server.setupDebug();
         br.close();
         file.close();
+    }
+
+    public static void notifyNewServerRelay(Boolean secureFlag, JSONObject servers, HashMap<Socket, JSONObject> relayList,
+                                            Logger logr_debug, String ip, int InitPort, Boolean debug) throws IOException {
+
+        String host = servers.get("hostname").toString();
+        int port = Integer.parseInt(servers.get("port").toString());
+        int counter = 0;
+        ArrayList<Thread> threadExchangeRelay = new ArrayList<>();
+        for(Socket relaySocket : relayList.keySet()) {
+            Socket newRelay;
+            if (secureFlag) {
+                SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                newRelay = sslsocketfactory.createSocket(host, port);
+            } else {
+                newRelay = new Socket(host, port);
+            }
+            JSONObject cmd = relayList.get(relaySocket);
+            if (cmd.has("relay")) {
+                cmd.put("relay", false);
+            }
+            threadExchangeRelay.add(new Thread(() -> {
+                try {
+                    relayThread(cmd, newRelay, logr_debug, ip, InitPort, debug);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }));
+            threadExchangeRelay.get(counter).start();
+            counter++;
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
