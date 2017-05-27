@@ -132,6 +132,7 @@ public class Client {
                         System.exit(1);
                         return;
                     } else {
+                        logr.fine("publishing to " + host + ":" + port);
                         JSONObject sendPub = publishCommand(cmd);
                         sendMessage(command, sendPub, cmd);
 
@@ -143,6 +144,7 @@ public class Client {
                         System.exit(1);
                         return;
                     } else {
+                        logr.fine("removing from " + host + ":" + port);
                         JSONObject sendRem = removeCommand(cmd);
                         sendMessage(command, sendRem, cmd);
                     }
@@ -153,19 +155,23 @@ public class Client {
                         System.exit(1);
                         return;
                     } else {
+                        logr.fine("sharing to " + host + ":" + port);
                         JSONObject sendShare = shareCommand(cmd);
                         sendMessage(command, sendShare, cmd);
                     }
                     break;
                 case QUERY:
+                    logr.fine("querying from " + host + ":" + port);
                     JSONObject sendQuery = queryCommand(cmd);
                     sendMessage(command, sendQuery, cmd);
                     break;
                 case SUBSCRIBE:
+                    logrSub.fine("subscribing from " + host + ":" + port);
                     JSONObject sendSubscribe = subscribeCommand(cmd);
                     sendSubMessage(sendSubscribe, cmd);
                     break;
                 case FETCH:
+                    logr.fine("fetching from " + host + ":" + port);
                     JSONObject sendFetch = fetchCommand(cmd);
                     sendMessage(command, sendFetch, cmd);
                     break;
@@ -175,6 +181,7 @@ public class Client {
                         System.exit(1);
                         return;
                     } else {
+                        logr.fine("exchanging");
                         JSONObject sendExchange = exchangeCommand(cmd);
                         sendMessage(command, sendExchange, cmd);
                     }
@@ -225,7 +232,7 @@ public class Client {
         }
         exchange.put("command", "EXCHANGE");
         exchange.put("serverList", serverList);
-        logr.fine("exchanging");
+
         return exchange;
     }
 
@@ -239,7 +246,7 @@ public class Client {
         JSONObject fetch = queryCommand(cmd);
         fetch.put("command", "FETCH");
         fetch.remove("relay");
-        logr.fine("fetching from " + host + ":" + port);
+
         return fetch;
     }
 
@@ -278,7 +285,7 @@ public class Client {
         query.put("resourceTemplate", resourceTemplate);
         query.put("command", "QUERY");
         query.put("relay", relay);
-        logr.fine("querying from " + host + ":" + port);
+
         return query;
     }
 
@@ -293,7 +300,7 @@ public class Client {
         id = RandomStringUtils.randomAlphabetic(10);
         subscribe.put("command", "SUBSCRIBE");
         subscribe.put("id", id);
-        logrSub.fine("subscribing from " + host + ":" + port);
+
         return subscribe;
     }
 
@@ -324,7 +331,7 @@ public class Client {
         share.put("secret", secret);
         JSONObject resource = (JSONObject) share.get("resource");
         resource.put("uri", uri);
-        logr.fine("sharing to " + host + ":" + port);
+
         return share;
     }
 
@@ -340,7 +347,7 @@ public class Client {
         remove.put("command", "REMOVE");
         JSONObject resource = (JSONObject) remove.get("resource");
         resource.put("uri", uri);
-        logr.fine("removing from " + host + ":" + port);
+
         return remove;
     }
 
@@ -376,7 +383,7 @@ public class Client {
         resource.put("ezserver", ezserver);
         pub.put("resource", resource);
         pub.put("command", "PUBLISH");
-        logr.fine("publishing to " + host + ":" + port);
+
         return pub;
     }
 
@@ -813,7 +820,8 @@ public class Client {
 
     private static void checkHostNPort(CommandLine cmd) {
         if (cmd.hasOption("port") || cmd.hasOption("host")) {
-            host = cmd.getOptionValue("host");
+            host = cmd.hasOption("host")?cmd.getOptionValue("host"):host;
+            System.out.println(host);
             String strPort = cmd.getOptionValue("port");
             if (strPort.length() > 5) {
                 System.out.println("Port out of range, please give a valid port number~");
