@@ -8,20 +8,17 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
-
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
-
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
-
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -555,7 +552,7 @@ public class Client {
                 String read = "";
                 try {
                     read = in.readUTF();
-                } catch (Exception e) {
+                } catch (SocketTimeoutException e) {
                 }
                 if (read.length() != 0) {
                     receiveData += read + ",";
