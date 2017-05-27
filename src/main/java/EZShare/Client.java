@@ -8,21 +8,17 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
-
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
-
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
-
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
-
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 

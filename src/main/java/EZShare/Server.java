@@ -318,7 +318,7 @@ public class Server {
                     msg.put("errorMessage", "missing or incorrect type for command");
                     sendMsg.add(msg);
                 } else {
-                    System.out.println(subList.size());
+//                    System.out.println(subList.size());
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),

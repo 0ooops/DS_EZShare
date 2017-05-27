@@ -8,12 +8,12 @@ package EZShare;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import java.io.InputStream;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class QueryNExchange {
      * @return JSONArray
      */
     public static JSONArray selfQuery(JSONObject command, HashMap<Integer, Resource> resourceList) {
-        System.out.println(command);
+//        System.out.println(command);
         JSONArray queryList = new JSONArray();
         JSONObject cmd = JSONObject.fromObject(command.get("resourceTemplate"));
         JSONArray cmdTagsJson = cmd.getJSONArray("tags");
@@ -229,6 +229,18 @@ public class QueryNExchange {
 
     public static String securedServerSend(String server, int port, String data) {
         String receiveData = "";
+        //          For .jar package
+        InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream("serverKeyStore/server-keystore.jks");
+        InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream("serverKeyStore/server-keystore.jks");
+        try {
+            setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+            keyStoreInput.close();
+            trustStoreInput.close();
+        } catch (Exception e) {
+        }
+
         try {
             SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
             SSLSocket connection = (SSLSocket) sslsocketfactory.createSocket(server, port);
@@ -253,5 +265,34 @@ public class QueryNExchange {
         } finally {
             return receiveData;
         }
+    }
+
+    /**
+     * This function is used for setting up ssl environment in .jar package.
+     */
+    private static void setSSLFactories(InputStream keyStream, String keyStorePassword,
+                                        InputStream trustStream) throws Exception
+    {
+        // Get keyStore
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] keyPassword = keyStorePassword.toCharArray();
+        keyStore.load(keyStream, keyPassword);
+        KeyManagerFactory keyFactory =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyFactory.init(keyStore, keyPassword);
+        KeyManager[] keyManagers = keyFactory.getKeyManagers();
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+        // Load the stream to your store
+        trustStore.load(trustStream, null);
+        TrustManagerFactory trustFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustFactory.init(trustStore);
+        TrustManager[] trustManagers = trustFactory.getTrustManagers();
+
+        // Initialize an ssl context to use these managers and set as default
+        SSLContext sslContext = SSLContext.getInstance("SSL");
+        sslContext.init(keyManagers, trustManagers, null);
+        SSLContext.setDefault(sslContext);
     }
 }
