@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.logging.*;
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
+
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
@@ -528,14 +530,18 @@ public class Client {
             in.close();
             out.close();
             connection.close();
+        }catch (SSLHandshakeException e){
+            System.out.println("Unable to connect to unsecure port with -secure.");
         } catch (InterruptedException e) {
-            System.out.println("bad things always happen, pls try again.");
+            System.out.println("Bad things always happen, pls try again.");
         } catch (FileNotFoundException e) {
-            System.out.println("file not found");
+            System.out.println("File not found.");
         } catch (UnknownHostException e) {
-            System.out.println("Unknown Host");
+            System.out.println("Unknown Host.");
+        }catch (EOFException e){
+            System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
-            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
+            System.out.println("Connection fail.");
         }
     }
 
@@ -645,12 +651,16 @@ public class Client {
                     System.exit(0);
                 }
             }
-        } catch (SocketException e) {
-            System.out.println("fail to connect");
+        }catch (SSLHandshakeException e){
+            System.out.println("Unable to connect to a unsecure port with -secure.");
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found.");
         } catch (UnknownHostException e) {
-            System.out.println("unknown host");
+            System.out.println("Unknown Host.");
+        }catch (EOFException e){
+            System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
-            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
+            System.out.println("Connection fail.");
         }
     }
 
@@ -675,13 +685,13 @@ public class Client {
                 if (comd.equals("")) {
                     comd = arg;
                 } else {
-                    System.out.println("multiple commands detected, pls just give one command");
+                    System.out.println("Multiple commands detected, pls just give one command");
                     System.exit(1);
                 }
             }
         }
         if (comd.equals("")) {
-            System.out.println("pls give your command (publish, subscribe, or exchange?)");
+            System.out.println("Pls give your command (publish, subscribe, or exchange?)");
             System.exit(1);
         }
         return comd;
