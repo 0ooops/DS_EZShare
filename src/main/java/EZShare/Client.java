@@ -844,6 +844,7 @@ public class Client {
         keyFactory.init(keyStore, keyPassword);
         KeyManager[] keyManagers = keyFactory.getKeyManagers();
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        
         // Load the stream to your store
         trustStore.load(trustStream, null);
         TrustManagerFactory trustFactory =
