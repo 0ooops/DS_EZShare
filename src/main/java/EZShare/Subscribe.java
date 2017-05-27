@@ -17,6 +17,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,7 +107,7 @@ public class Subscribe {
                 String recv = "";
                 try {
                     recv = in.readUTF();
-                } catch(Exception e) {
+                } catch(SocketTimeoutException e) {
                 }
                 if (recv.length() != 0) {
 
@@ -293,9 +294,8 @@ public class Subscribe {
 
                 String read = "";
                 try {
-                    Thread.sleep(1000);
                     read = in.readUTF();
-                }catch (Exception e){
+                }catch (SocketTimeoutException e){
                 }
 
                 //debug message
