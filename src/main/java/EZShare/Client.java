@@ -8,18 +8,21 @@ package EZShare;
  */
 
 import org.apache.commons.cli.*;
+
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
+
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
 
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
+
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -87,6 +90,22 @@ public class Client {
  */
         try {
             cmd = parser.parse(options, args);
+            if (cmd.hasOption("port") || cmd.hasOption("host")) {
+                host = cmd.hasOption("host") ? cmd.getOptionValue("host") : host;
+                System.out.println(host);
+                String strPort = cmd.hasOption("port") ? cmd.getOptionValue("port") : port + "";
+                if (strPort.length() > 5) {
+                    System.out.println("Port out of range, please give a valid port number~");
+                    System.exit(1);
+                }
+                try {
+                    port = Integer.parseInt(cmd.getOptionValue("port"));
+                } catch (NumberFormatException E) {
+                    System.out.println("Please give a valid port number~");
+                    System.exit(1);
+                }
+
+            }
         } catch (ParseException e) {
             formatter.printHelp("Pls choose commands from below", options);
             System.exit(1);
@@ -95,7 +114,7 @@ public class Client {
 /**
  * check if port number is valid
  */
-        checkHostNPort(cmd);
+//        checkHostNPort(cmd);
 
 
 /**
@@ -818,31 +837,15 @@ public class Client {
         }
     }
 
-    private static void checkHostNPort(CommandLine cmd) {
-        if (cmd.hasOption("port") || cmd.hasOption("host")) {
-            host = cmd.hasOption("host")?cmd.getOptionValue("host"):host;
-            System.out.println(host);
-            String strPort = cmd.getOptionValue("port");
-            if (strPort.length() > 5) {
-                System.out.println("Port out of range, please give a valid port number~");
-                System.exit(1);
-            }
-            try {
-                port = Integer.parseInt(cmd.getOptionValue("port"));
-            } catch (NumberFormatException E) {
-                System.out.println("Please give a valid port number~");
-                System.exit(1);
-            }
-
-        }
-    }
+//    private static void checkHostNPort(CommandLine cmd) {
+//
+//    }
 
     /**
      * This function is used for setting up ssl environment in .jar package.
      */
     private static void setSSLFactories(InputStream keyStream, String keyStorePassword,
-                                        InputStream trustStream) throws Exception
-    {
+                                        InputStream trustStream) throws Exception {
         // Get keyStore
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         char[] keyPassword = keyStorePassword.toCharArray();
@@ -852,7 +855,7 @@ public class Client {
         keyFactory.init(keyStore, keyPassword);
         KeyManager[] keyManagers = keyFactory.getKeyManagers();
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        
+
         // Load the stream to your store
         trustStore.load(trustStream, null);
         TrustManagerFactory trustFactory =
