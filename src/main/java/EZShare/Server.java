@@ -190,6 +190,7 @@ public class Server {
             // Create thread for each secured client
             while(true) {
                 SSLSocket sslClient = (SSLSocket)sslServerSocket.accept();
+                sslClient.setSoTimeout(2000);
                 Thread tSecured = new Thread(() -> serveClient(sslClient, cmd, securedServerList, secureRelayList, true));
                 tSecured.start();
             }
@@ -210,6 +211,7 @@ public class Server {
             // Create thread for each unsecured client
             while(true) {
                 Socket client = server.accept();
+                client.setSoTimeout(2000);
                 Thread t = new Thread(() -> serveClient(client, cmd, unsecuredServerList, insecureRelayList, false));
                 t.start();
             }
@@ -231,12 +233,22 @@ public class Server {
         JSONArray fileResponse = null;
         JSONArray sendMsg = new JSONArray();
         Date date = new Date();
+        String getAddress = client.getInetAddress().getHostAddress();
+        DataInputStream in = null;
+        DataOutputStream out = null;
+        FileInputStream file = null;
 
-        try(Socket clientSocket = client) {
+        try {
+            in = new DataInputStream(client.getInputStream());
+            out = new DataOutputStream(client.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
             // Check connection interval limit, if less than lower requirement, close the connection with processing.
-            String getAddress = clientSocket.getInetAddress().getHostAddress();
             logr_debug.fine("The connection with " + getAddress + ":" +
-                    clientSocket.getPort() + " has been established.");
+                    client.getPort() + " has been established.");
             if (debug) {
                 Subscribe.printDebugLog(getRealIp(), port);
             }
@@ -244,18 +256,16 @@ public class Server {
             if (clientList.containsKey(getAddress)) {
                 if (time - clientList.get(getAddress) < connectionSecond * 1000) {
                     logr_debug.fine("The request from host " + getAddress + " is too frequent.");
-                    clientSocket.close();
+                    client.close();
                     logr_debug.fine("The connection with " + getAddress + ":" +
-                            clientSocket.getPort() + " has been closed by server.");
+                            client.getPort() + " has been closed by server.");
                     if (debug) {
                         Subscribe.printDebugLog(getRealIp(), port);
                     }
                 }
             }
             clientList.put(getAddress, time);
-            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-            FileInputStream file = null;
+
             // Call different functions based on client's command.
             do {
                 receiveData = in.readUTF();
@@ -272,14 +282,14 @@ public class Server {
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),
-                                    clientSocket.getLocalPort()));
+                                    client.getLocalPort()));
                             break;
                         case "REMOVE":
                             sendMsg.add(RemoveNFetch.remove(cmd, resourceList, keys));
                             break;
                         case "SHARE":
                             sendMsg.add(PublishNShare.share(cmd, resourceList, keys, secret,
-                                    getRealIp(), clientSocket.getLocalPort()));
+                                    getRealIp(), client.getLocalPort()));
                             break;
                         case "FETCH":
                             fileResponse = RemoveNFetch.fetch(cmd, resourceList);
@@ -296,13 +306,13 @@ public class Server {
                             sendMsg.addAll(QueryNExchange.exchange(cmd, serverList, relayList, logr_debug, secure, getRealIp(), port, debug));
                             break;
                         case "SUBSCRIBE":
-                            Subscribe.init(cmd, clientSocket, resourceList, secure,
+                            Subscribe.init(cmd, client, resourceList, secure,
                                     logr_debug, getRealIp(), port, debug, serverList, relayList);
-                            if (relayList.containsKey(clientSocket)) {
-                                relayList.remove(clientSocket);
+                            if (relayList.containsKey(client)) {
+                                relayList.remove(client);
                             }
-                            subList.remove(clientSocket);
-                            subCounterList.remove(clientSocket);
+                            subList.remove(client);
+                            subCounterList.remove(client);
                             break;
                         default:
                             msg.put("response", "error");
@@ -333,15 +343,24 @@ public class Server {
                     }
                 }
             } while(in.available() > 0);
-            out.close();
-            clientSocket.close();
-            logr_debug.fine("The connection with " + getAddress + ":" +
-                    clientSocket.getPort() + " has been closed.");
-            if (debug) {
-                Subscribe.printDebugLog(getRealIp(), port);
-            }
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                out.close();
+                client.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logr_debug.fine("The connection with " + getAddress + ":" +
+                    client.getPort() + " has been closed.");
+            if (debug) {
+                try {
+                    Subscribe.printDebugLog(getRealIp(), port);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
