@@ -433,12 +433,26 @@ public class Client {
                 System.exit(1);
             }
             if (!command.equals(FETCH)) {
-                do {
-                    Thread.sleep(1000);
-                    String read = in.readUTF();
-                    logr.fine("RECEIVED:" + read);
-                    receiveData += read + ",";
-                } while (in.available() > 0);
+                if (secure){
+                    connection.setSoTimeout(2000);
+                    boolean flag=true;
+                    while (flag) {
+                        try {
+                            String read = in.readUTF();
+                            logr.fine("RECEIVED:" + read);
+                            receiveData += read + ",";
+                        } catch (Exception e) {
+                            flag=false;
+                        }
+                    }
+                }else {
+                    do {
+                        Thread.sleep(1000);
+                        String read = in.readUTF();
+                        logr.fine("RECEIVED:" + read);
+                        receiveData += read + ",";
+                    } while (in.available() > 0);
+                }
             } else {
                 Thread.sleep(1000);
                 String readline = in.readUTF();
