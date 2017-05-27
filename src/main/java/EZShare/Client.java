@@ -98,7 +98,7 @@ public class Client {
                     System.exit(1);
                 }
                 try {
-                    port = Integer.parseInt(cmd.getOptionValue("port"));
+                    port = Integer.parseInt(strPort);
                 } catch (NumberFormatException E) {
                     System.out.println("Please give a valid port number~");
                     System.exit(1);
@@ -630,7 +630,7 @@ public class Client {
                     }
                 }
                 if (enterRead.ready()) {
-                    if (enterRead.read() == '\n') {
+                    if (enterRead.read() == '\n' || enterRead.read() == '\r') {
                         String unsubMsg = unsubscribeCommand().toString();
                         out.writeUTF(unsubMsg);
                         logrSub.fine("SENT:" + unsubMsg);
