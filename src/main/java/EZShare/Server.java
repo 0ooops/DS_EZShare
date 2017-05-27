@@ -178,7 +178,7 @@ public class Server {
      */
     private static void securedSocket(CommandLine cmd) {
         try {
-//             For .jar package
+//          For .jar package
             InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream("serverKeyStore/server-keystore.jks");
             InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
@@ -191,7 +191,6 @@ public class Server {
 //            System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
 //            System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
 //            System.setProperty("javax.net.debug","all");
-
 
             SSLServerSocketFactory sslFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             SSLServerSocket sslServerSocket = (SSLServerSocket) sslFactory.createServerSocket(securedPort);
@@ -319,6 +318,7 @@ public class Server {
                     msg.put("errorMessage", "missing or incorrect type for command");
                     sendMsg.add(msg);
                 } else {
+                    System.out.println(subList.size());
                     switch (cmd.get("command").toString()) {
                         case "PUBLISH":
                             sendMsg.add(PublishNShare.publish(cmd, resourceList, keys, getRealIp(),
