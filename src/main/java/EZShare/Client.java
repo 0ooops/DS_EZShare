@@ -636,7 +636,7 @@ public class Client {
         } catch (UnknownHostException e) {
             System.out.println("unknown host");
         } catch (IOException e) {
-            System.out.println("io exception");
+            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
         }
     }
 
@@ -667,7 +667,7 @@ public class Client {
             }
         }
         if (comd.equals("")) {
-            System.out.println("pls give your command(publish, share, or fetch?)");
+            System.out.println("pls give your command (publish, subscribe, or exchange?)");
             System.exit(1);
         }
         return comd;
