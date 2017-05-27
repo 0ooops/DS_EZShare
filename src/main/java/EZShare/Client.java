@@ -9,18 +9,19 @@ package EZShare;
 
 import org.apache.commons.cli.*;
 
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
+
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
-import javax.net.ssl.SSLSocket;
+
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
+
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 
 
@@ -71,7 +72,6 @@ public class Client {
         options.addOption("publish", false, "publish source on server");
         options.addOption("query", false, "query for resources from server");
         options.addOption("subscribe", false, "subscribe to server");
-        options.addOption("unsubscribe", false, "unsubscribe to server");
         options.addOption("remove", false, "remove resources from server");
         options.addOption("secret", true, "secret");
         options.addOption("servers", true, "server list, host1:port1, host2, port2,...");
@@ -90,34 +90,15 @@ public class Client {
         try {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            formatter.printHelp("pls choose commands from below", options);
+            formatter.printHelp("Pls choose commands from below", options);
             System.exit(1);
             return;
         }
 /**
  * check if port number is valid
  */
-        if (cmd.hasOption("port") || cmd.hasOption("host")) {
-            if (cmd.hasOption("port") && cmd.hasOption("host")) {
-                host = cmd.getOptionValue("host");
-                String strPort = cmd.getOptionValue("port");
-                if (strPort.length() > 5) {
-                    System.out.println("port out of range,please give a valid port number~");
-                    System.exit(1);
-                }
-                try {
-                    port = Integer.parseInt(cmd.getOptionValue("port"));
-                } catch (NumberFormatException E) {
-                    System.out.println("please give a valid port number~");
-                    System.exit(1);
-                    return;
-                }
-            } else {
-                System.out.println("please give both hostname and port number~");
-                System.exit(1);
-                return;
-            }
-        }
+        checkHostNPort(cmd);
+
 
 /**
  * check if connection will be secured.
@@ -433,19 +414,19 @@ public class Client {
                 System.exit(1);
             }
             if (!command.equals(FETCH)) {
-                if (secure){
+                if (secure) {
                     connection.setSoTimeout(2000);
-                    boolean flag=true;
+                    boolean flag = true;
                     while (flag) {
                         try {
                             String read = in.readUTF();
                             logr.fine("RECEIVED:" + read);
                             receiveData += read + ",";
                         } catch (Exception e) {
-                            flag=false;
+                            flag = false;
                         }
                     }
-                }else {
+                } else {
                     do {
                         Thread.sleep(1000);
                         String read = in.readUTF();
@@ -528,14 +509,18 @@ public class Client {
             in.close();
             out.close();
             connection.close();
+        } catch (SSLHandshakeException e) {
+            System.out.println("Unable to connect to unsecure port with -secure.");
         } catch (InterruptedException e) {
-            System.out.println("bad things always happen, pls try again.");
+            System.out.println("Bad things always happen, pls try again.");
         } catch (FileNotFoundException e) {
-            System.out.println("file not found");
+            System.out.println("File not found.");
         } catch (UnknownHostException e) {
-            System.out.println("Unknown Host");
+            System.out.println("Unknown Host.");
+        } catch (EOFException e) {
+            System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
-            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
+            System.out.println("Connection fail.");
         }
     }
 
@@ -645,12 +630,16 @@ public class Client {
                     System.exit(0);
                 }
             }
-        } catch (SocketException e) {
-            System.out.println("fail to connect");
+        } catch (SSLHandshakeException e) {
+            System.out.println("Unable to connect to a unsecure port with -secure.");
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found.");
         } catch (UnknownHostException e) {
-            System.out.println("unknown host");
+            System.out.println("Unknown Host.");
+        } catch (EOFException e) {
+            System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
-            System.out.println("connection fail. Put -secure if you want to connect to a secure port.");
+            System.out.println("Connection fail.");
         }
     }
 
@@ -675,13 +664,13 @@ public class Client {
                 if (comd.equals("")) {
                     comd = arg;
                 } else {
-                    System.out.println("multiple commands detected, pls just give one command");
+                    System.out.println("Multiple commands detected, pls just give one command");
                     System.exit(1);
                 }
             }
         }
         if (comd.equals("")) {
-            System.out.println("pls give your command (publish, subscribe, or exchange?)");
+            System.out.println("Pls give your command (publish, subscribe, or exchange?)");
             System.exit(1);
         }
         return comd;
@@ -803,4 +792,21 @@ public class Client {
         }
     }
 
+    private static void checkHostNPort(CommandLine cmd) {
+        if (cmd.hasOption("port") || cmd.hasOption("host")) {
+            host = cmd.getOptionValue("host");
+            String strPort = cmd.getOptionValue("port");
+            if (strPort.length() > 5) {
+                System.out.println("Port out of range, please give a valid port number~");
+                System.exit(1);
+            }
+            try {
+                port = Integer.parseInt(cmd.getOptionValue("port"));
+            } catch (NumberFormatException E) {
+                System.out.println("Please give a valid port number~");
+                System.exit(1);
+            }
+
+        }
+    }
 }
