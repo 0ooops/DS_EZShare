@@ -179,17 +179,17 @@ public class Server {
     private static void securedSocket(CommandLine cmd) {
         try {
 //             For .jar package
-//            InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
-//                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
-//            InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
-//                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
-//            setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
-//            keyStoreInput.close();
-//            trustStoreInput.close();
+            InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
+            InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
+            setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+            keyStoreInput.close();
+            trustStoreInput.close();
 
-            System.setProperty("javax.net.ssl.keyStore","serverKeyStore/server-keystore.jks");
-            System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
-            System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
+//            System.setProperty("javax.net.ssl.keyStore","serverKeyStore/server-keystore.jks");
+//            System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
+//            System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
 //            System.setProperty("javax.net.debug","all");
 
 

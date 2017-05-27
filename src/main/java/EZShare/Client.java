@@ -92,7 +92,6 @@ public class Client {
             cmd = parser.parse(options, args);
             if (cmd.hasOption("port") || cmd.hasOption("host")) {
                 host = cmd.hasOption("host") ? cmd.getOptionValue("host") : host;
-                System.out.println(host);
                 String strPort = cmd.hasOption("port") ? cmd.getOptionValue("port") : port + "";
                 if (strPort.length() > 5) {
                     System.out.println("Port out of range, please give a valid port number~");
@@ -421,15 +420,15 @@ public class Client {
         try {
             if (secure) {
                 // For .jar package
-//                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
-//                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
-//                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
-//                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
-//                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
-//                keyStoreInput.close();
-//                trustStoreInput.close();
+                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
+                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
+                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+                keyStoreInput.close();
+                trustStoreInput.close();
 
-                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+//                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
 
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 connection = sslsocketfactory.createSocket(host, port);
@@ -573,14 +572,14 @@ public class Client {
         try {
 
             if (secure) {
-//                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
-//                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
-//                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
-//                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
-//                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
-//                keyStoreInput.close();
-//                trustStoreInput.close();
-                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
+                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
+                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+                keyStoreInput.close();
+                trustStoreInput.close();
+//                System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 connection = sslsocketfactory.createSocket(host, port);
             } else {
