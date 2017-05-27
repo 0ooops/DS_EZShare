@@ -12,7 +12,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.RandomStringUtils;
-
 import javax.net.ssl.SSLSocketFactory;
 import java.awt.*;
 import java.io.*;
@@ -146,7 +145,7 @@ public class Subscribe {
         try {
             for (int i = 0; i < sendMsg.size(); i++) {
                 out.writeUTF(sendMsg.getJSONObject(i).toString());
-                logr_debug.fine("SENT: " + sendMsg.toString());
+                logr_debug.fine("SENT: " + sendMsg.getJSONObject(i).toString());
                 if (debug) {
                     Subscribe.printDebugLog(ip, port);
                 }

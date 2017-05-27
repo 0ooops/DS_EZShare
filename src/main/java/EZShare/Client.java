@@ -10,13 +10,14 @@ package EZShare;
 import org.apache.commons.cli.*;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.*;
 import net.sf.json.*;
 import org.apache.commons.lang.RandomStringUtils;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSocketFactory;
+
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
@@ -393,7 +394,17 @@ public class Client {
 
         try {
             if (secure) {
+                // For .jar package
+//                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+//                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
+//                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+//                        .getResourceAsStream("serverKeyStore/server-keystore.jks");
+//                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+//                keyStoreInput.close();
+//                trustStoreInput.close();
+
                 System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
+
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 connection = sslsocketfactory.createSocket(host, port);
             } else {
@@ -518,6 +529,8 @@ public class Client {
             System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
             System.out.println("Connection fail.");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -534,6 +547,13 @@ public class Client {
         try {
 
             if (secure) {
+//                InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+//                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
+//                InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+//                        .getResourceAsStream("clientKeyStore/client-keystore.jks");
+//                setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+//                keyStoreInput.close();
+//                trustStoreInput.close();
                 System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/client-keystore.jks");
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 connection = sslsocketfactory.createSocket(host, port);
@@ -637,6 +657,8 @@ public class Client {
             System.out.println("Put -secure if you want to connect to a secure port.");
         } catch (IOException e) {
             System.out.println("Connection fail.");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -805,5 +827,33 @@ public class Client {
             }
 
         }
+    }
+
+    /**
+     * This function is used for setting up ssl environment in .jar package.
+     */
+    private static void setSSLFactories(InputStream keyStream, String keyStorePassword,
+                                        InputStream trustStream) throws Exception
+    {
+        // Get keyStore
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] keyPassword = keyStorePassword.toCharArray();
+        keyStore.load(keyStream, keyPassword);
+        KeyManagerFactory keyFactory =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyFactory.init(keyStore, keyPassword);
+        KeyManager[] keyManagers = keyFactory.getKeyManagers();
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        // Load the stream to your store
+        trustStore.load(trustStream, null);
+        TrustManagerFactory trustFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustFactory.init(trustStore);
+        TrustManager[] trustManagers = trustFactory.getTrustManagers();
+
+        // Initialize an ssl context to use these managers and set as default
+        SSLContext sslContext = SSLContext.getInstance("SSL");
+        sslContext.init(keyManagers, trustManagers, null);
+        SSLContext.setDefault(sslContext);
     }
 }

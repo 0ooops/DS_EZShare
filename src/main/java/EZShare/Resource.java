@@ -154,7 +154,9 @@ public class Resource {
         this.ezServer = ezServer;
     }
 
-    //toJSON function
+    /**
+     * This function converts a Resource to JSONObject
+     */
     public JSONObject toJSON() {
         JSONObject myResource = new JSONObject();
 

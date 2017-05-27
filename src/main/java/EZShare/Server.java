@@ -13,12 +13,11 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.cli.*;
 import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
+import javax.net.ssl.*;
 import java.net.ServerSocket;
 import java.io.*;
 import java.net.*;
+import java.security.KeyStore;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -179,10 +178,20 @@ public class Server {
      */
     private static void securedSocket(CommandLine cmd) {
         try {
+//             For .jar package
+//            InputStream keyStoreInput = Thread.currentThread().getContextClassLoader()
+//                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
+//            InputStream trustStoreInput = Thread.currentThread().getContextClassLoader()
+//                    .getResourceAsStream("serverKeyStore/server-keystore.jks");
+//            setSSLFactories(keyStoreInput, "Dr.Stranger", trustStoreInput);
+//            keyStoreInput.close();
+//            trustStoreInput.close();
+
             System.setProperty("javax.net.ssl.keyStore","serverKeyStore/server-keystore.jks");
             System.setProperty("javax.net.ssl.trustStore", "serverKeyStore/server-keystore.jks");
             System.setProperty("javax.net.ssl.keyStorePassword","Dr.Stranger");
 //            System.setProperty("javax.net.debug","all");
+
 
             SSLServerSocketFactory sslFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             SSLServerSocket sslServerSocket = (SSLServerSocket) sslFactory.createServerSocket(securedPort);
@@ -196,7 +205,38 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    /**
+     * This function is used for setting up ssl environment in .jar package.
+     */
+    private static void setSSLFactories(InputStream keyStream, String keyStorePassword,
+                                        InputStream trustStream) throws Exception
+    {
+        // Get keyStore
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] keyPassword = keyStorePassword.toCharArray();
+        keyStore.load(keyStream, keyPassword);
+        KeyManagerFactory keyFactory =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyFactory.init(keyStore, keyPassword);
+        KeyManager[] keyManagers = keyFactory.getKeyManagers();
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+        // Load the stream to your store
+        trustStore.load(trustStream, null);
+        TrustManagerFactory trustFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustFactory.init(trustStore);
+        TrustManager[] trustManagers = trustFactory.getTrustManagers();
+
+        // Initialize an ssl context to use these managers and set as default
+        SSLContext sslContext = SSLContext.getInstance("SSL");
+        sslContext.init(keyManagers, trustManagers, null);
+        SSLContext.setDefault(sslContext);
     }
 
     /**
